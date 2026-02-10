@@ -3,6 +3,7 @@
 ## Project Overview
 Electron-based desktop application for real-time 3D visualization of quantum particle interactions within atomic-scale fermion fields. Scientifically accurate simulation with intuitive UI for educational and research purposes.
 
+The name "suigen" and resulting common nickname "sui" are based on the latin term "Sui Generis" - Of its own kind; constituting a class alone.
 ---
 
 ## Functional Requirements
