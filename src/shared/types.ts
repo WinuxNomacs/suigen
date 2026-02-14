@@ -32,9 +32,33 @@ export interface ScenarioEvent {
   targetOrbital?: OrbitalState;
 }
 
+export interface LaymanDescription {
+  title: string;
+  summary: string;
+  sections: {
+    whatsHappening: string;
+    whyItMatters: string;
+    whatToWatch: string;
+    funFact: string;
+  };
+}
+
+export interface ScientificEquation {
+  label: string;
+  tex: string;
+}
+
+export interface ScientificDescription {
+  narrative: string;
+  equations: ScientificEquation[];
+  constants: string[];
+}
+
 export interface Scenario {
   name: string;
   description: string;
+  layman: LaymanDescription;
+  scientific: ScientificDescription;
   particles: Array<Partial<ParticleData> & { type: ParticleType }>;
   events: ScenarioEvent[];
 }

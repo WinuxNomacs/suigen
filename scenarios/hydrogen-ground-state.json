@@ -1,6 +1,25 @@
 {
   "name": "Hydrogen Ground State",
   "description": "A single hydrogen atom: 1 proton and 1 electron in the 1s orbital",
+  "layman": {
+    "title": "The Simplest Atom",
+    "summary": "Meet hydrogen — the most basic building block of the universe",
+    "sections": {
+      "whatsHappening": "You're looking at a single hydrogen atom — the simplest atom that exists. At the center is a proton (red), a positively charged particle. Surrounding it is a cloud of probability (blue) showing where the electron is most likely to be found. The electron isn't orbiting like a planet — it exists as a fuzzy cloud of possibility.",
+      "whyItMatters": "Hydrogen makes up about 75% of all matter in the universe. Every star, including our Sun, is mostly hydrogen. Understanding this one atom is the foundation for understanding all of chemistry and most of physics.",
+      "whatToWatch": "Notice the blue cloud around the proton. This is the electron's '1s orbital' — a spherical shape meaning the electron could be found anywhere around the proton with roughly equal probability. The denser inner region shows where the electron is most likely to be.",
+      "funFact": "If a hydrogen atom were the size of a football stadium, the proton would be a marble at the 50-yard line. The electron cloud would fill the entire stadium. Atoms are almost entirely empty space!"
+    }
+  },
+  "scientific": {
+    "narrative": "The hydrogen atom is shown in its ground state with principal quantum number n=1, angular momentum quantum number l=0, and magnetic quantum number m=0. The electron probability density is given by the square of the 1s wavefunction, which is spherically symmetric. The radial probability peaks at the Bohr radius (52.9 pm from the nucleus).",
+    "equations": [
+      { "label": "1s wavefunction", "tex": "\u03c8\u2081\u209b(r) = (1/\u221a\u03c0)(1/a\u2080)\u00b3\u02f2 e^(-r/a\u2080)" },
+      { "label": "Ground state energy", "tex": "E\u2081 = -13.6 eV" },
+      { "label": "Bohr radius", "tex": "a\u2080 = 52.9 pm = 0.529 \u00c5" }
+    ],
+    "constants": ["Bohr radius: a\u2080 = 5.29 \u00d7 10\u207b\u00b9\u00b9 m", "Ground state energy: -13.6 eV", "Electron mass: 9.109 \u00d7 10\u207b\u00b3\u00b9 kg"]
+  },
   "particles": [
     { "type": "proton", "position": { "x": 0, "y": 0, "z": 0 } },
     { "type": "electron", "position": { "x": 0, "y": 0, "z": 0 }, "orbital": { "n": 1, "l": 0, "m": 0 } }

@@ -1,6 +1,25 @@
 {
   "name": "Photon Emission",
   "description": "An excited hydrogen atom emits a photon as the electron drops from 2p to 1s",
+  "layman": {
+    "title": "Releasing Light",
+    "summary": "An excited atom relaxes and shoots out a particle of light",
+    "sections": {
+      "whatsHappening": "This hydrogen atom starts in an excited state — its electron is in a higher energy level (2p) than it wants to be. Nature prefers the lowest energy state, so the electron spontaneously drops back down to the ground state (1s). The excess energy is released as a photon — a particle of light that flies away from the atom.",
+      "whyItMatters": "This is how all light is created. Every light source — from candle flames to LED screens to distant stars — produces light through atoms releasing photons as their electrons drop to lower energy levels. The specific energy of the photon determines its color.",
+      "whatToWatch": "Watch the dumbbell-shaped electron cloud (2p orbital) collapse into a sphere (1s orbital). At that moment, a yellow photon appears and flies away to the right with its characteristic wave trail. The atom is now back in its lowest energy state.",
+      "funFact": "The photon emitted here has a wavelength of 121.6 nanometers — that's ultraviolet light, invisible to human eyes. Most of the light hydrogen emits is actually invisible to us!"
+    }
+  },
+  "scientific": {
+    "narrative": "A hydrogen atom in the excited state (n=2, l=1, m=0) undergoes spontaneous emission. The electron transitions from the 2p to the 1s state, emitting a photon with energy E = 10.2 eV (Lyman-alpha line, \u03bb = 121.6 nm). The transition obeys the electric dipole selection rule \u0394l = \u00b11. The mean lifetime of the 2p state is approximately 1.6 nanoseconds.",
+    "equations": [
+      { "label": "Emitted photon energy", "tex": "E = E\u2082 - E\u2081 = -3.4 - (-13.6) = 10.2 eV" },
+      { "label": "Spontaneous emission rate", "tex": "A\u2082\u2081 = 6.27 \u00d7 10\u2078 s\u207b\u00b9" },
+      { "label": "Mean lifetime", "tex": "\u03c4 = 1/A\u2082\u2081 \u2248 1.6 ns" }
+    ],
+    "constants": ["2p state energy: -3.4 eV", "1s state energy: -13.6 eV", "Mean lifetime of 2p: 1.6 ns"]
+  },
   "particles": [
     { "type": "proton", "position": { "x": 0, "y": 0, "z": 0 } },
     { "type": "electron", "position": { "x": 0, "y": 0, "z": 0 }, "orbital": { "n": 2, "l": 1, "m": 0 } }
