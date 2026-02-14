@@ -2,11 +2,13 @@ import * as THREE from 'three';
 import { ParticleData, ParticleType, Vec3, OrbitalState } from '../../shared/types';
 import { createParticleMesh } from './ParticleFactory';
 import { createOrbitalMesh } from './OrbitalMesh';
+import { PhotonTrail } from './PhotonTrail';
 
 interface SceneParticle {
   data: ParticleData;
   mesh: THREE.Mesh;
   orbitalMesh?: THREE.Object3D;
+  trail?: PhotonTrail;
 }
 
 let nextId = 1;
@@ -42,6 +44,10 @@ export class ParticleManager {
       this.scene.add(sp.orbitalMesh);
     }
 
+    if (type === 'photon') {
+      sp.trail = new PhotonTrail(this.scene);
+    }
+
     this.particles.set(id, sp);
     return data;
   }
@@ -55,6 +61,7 @@ export class ParticleManager {
       if (sp.orbitalMesh) {
         this.scene.remove(sp.orbitalMesh);
       }
+      if (sp.trail) sp.trail.dispose(this.scene);
       this.particles.delete(id);
     }
   }
@@ -92,6 +99,16 @@ export class ParticleManager {
     sp.data.orbital = { ...orbital };
     sp.orbitalMesh = createOrbitalMesh(orbital);
     this.scene.add(sp.orbitalMesh);
+  }
+
+  updateTrails(time: number): void {
+    for (const sp of this.particles.values()) {
+      if (sp.trail && sp.data.type === 'photon' && sp.data.direction) {
+        const pos = new THREE.Vector3(sp.data.position.x, sp.data.position.y, sp.data.position.z);
+        const dir = new THREE.Vector3(sp.data.direction.x, sp.data.direction.y, sp.data.direction.z).normalize();
+        sp.trail.update(pos, dir, time);
+      }
+    }
   }
 
   clear(): void {
