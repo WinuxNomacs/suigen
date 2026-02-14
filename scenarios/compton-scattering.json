@@ -1,0 +1,43 @@
+{
+  "name": "Compton Scattering",
+  "description": "A photon scatters off a free electron, transferring some of its energy",
+  "layman": {
+    "title": "Light Bounces Off Matter",
+    "summary": "Watch what happens when a photon collides with an electron and bounces away with less energy",
+    "sections": {
+      "whatsHappening": "A high-energy photon is heading toward an electron. Unlike absorption (where the photon vanishes entirely), here the photon bounces off the electron like a billiard ball. The photon loses some energy in the collision and changes direction, while the electron gets knocked away. The photon keeps going but with less energy than before.",
+      "whyItMatters": "Compton scattering proved that light really does behave like a particle, not just a wave. This was one of the key experiments that launched quantum mechanics. It's also how X-ray machines create contrast — X-ray photons scatter differently off bone versus soft tissue.",
+      "whatToWatch": "Follow the yellow photon as it approaches the blue electron. At impact, the photon deflects upward and the electron recoils to the right. Notice the photon's wave trail — after scattering, its wavelength appears longer (lower energy).",
+      "funFact": "Arthur Compton won the Nobel Prize in 1927 for discovering this effect. Before his experiment, many physicists refused to believe light could behave as a particle. His billiard-ball-style calculation matched the data perfectly!"
+    }
+  },
+  "scientific": {
+    "narrative": "An incident photon scatters off a quasi-free electron. The photon transfers momentum and energy to the electron, emerging with a longer wavelength (lower energy) at a scattering angle. This is modeled as an elastic collision between the photon and electron, conserving both energy and momentum. The wavelength shift depends only on the scattering angle, not the initial photon energy.",
+    "equations": [
+      { "label": "Compton wavelength shift", "tex": "\u0394\u03bb = (\u03bb' - \u03bb) = (h/m_e c)(1 - cos\u03b8)" },
+      { "label": "Compton wavelength of electron", "tex": "\u03bb_C = h/m_e c = 2.43 \u00d7 10\u207b\u00b9\u00b2 m" },
+      { "label": "Energy conservation", "tex": "E_\u03b3 + m_e c\u00b2 = E'_\u03b3 + E_e" }
+    ],
+    "constants": ["Compton wavelength: 2.43 pm", "Electron rest energy: 0.511 MeV", "Incident photon energy: ~100 eV (soft X-ray)"]
+  },
+  "particles": [
+    { "type": "electron", "position": { "x": 0, "y": 0, "z": 0 } }
+  ],
+  "events": [
+    {
+      "time": 0,
+      "action": "spawn",
+      "particle": { "type": "photon", "position": { "x": -80000, "y": 0, "z": 0 }, "direction": { "x": 1, "y": 0, "z": 0 }, "energy": 100 }
+    },
+    {
+      "time": 1600,
+      "action": "remove",
+      "photonIndex": 1
+    },
+    {
+      "time": 1600,
+      "action": "spawn",
+      "particle": { "type": "photon", "position": { "x": 0, "y": 0, "z": 0 }, "direction": { "x": 0.7, "y": 0.7, "z": 0 }, "energy": 80 }
+    }
+  ]
+}
