@@ -1,12 +1,42 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Suigen</title>
-  </head>
-  <body>
-    <h1>Suigen</h1>
-    <p>Quantum particle interaction visualizer</p>
-    <script type="module" src="./app.ts"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';" />
+  <title>Suigen</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <div id="toolbar">
+      <button class="particle-btn" data-type="electron" title="Electron">e&#x207B;</button>
+      <button class="particle-btn" data-type="proton" title="Proton">p&#x207A;</button>
+      <button class="particle-btn" data-type="neutron" title="Neutron">n&#x2070;</button>
+      <button class="particle-btn" data-type="photon" title="Photon">&#x03B3;</button>
+      <hr style="border-color: #333; margin: 8px 0;" />
+      <select id="scenario-select" style="width: 44px; font-size: 10px; background: #1a1a2e; color: #ccc; border: 1px solid #444; border-radius: 4px; padding: 2px;" title="Load scenario">
+        <option value="">Load</option>
+        <option value="hydrogen-ground-state">H</option>
+        <option value="photon-absorption">Abs</option>
+        <option value="photon-emission">Emit</option>
+        <option value="helium-atom">He</option>
+      </select>
+    </div>
+    <div id="viewport"></div>
+    <div id="properties">
+      <h3>Properties</h3>
+      <div id="properties-content">
+        <p class="hint">Select a particle</p>
+      </div>
+    </div>
+    <div id="timeline">
+      <button id="btn-step-back" title="Step back">&#x00AB;</button>
+      <button id="btn-play" title="Play/Pause">&#x25B6;</button>
+      <button id="btn-step-fwd" title="Step forward">&#x00BB;</button>
+      <label>Speed: <input id="speed" type="range" min="0.1" max="10" step="0.1" value="1" /></label>
+      <span id="time-display">t = 0.0 fs</span>
+    </div>
+  </div>
+  <script type="module" src="app.ts"></script>
+</body>
 </html>
