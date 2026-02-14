@@ -1,0 +1,9 @@
+{
+  "name": "Hydrogen Ground State",
+  "description": "A single hydrogen atom: 1 proton and 1 electron in the 1s orbital",
+  "particles": [
+    { "type": "proton", "position": { "x": 0, "y": 0, "z": 0 } },
+    { "type": "electron", "position": { "x": 0, "y": 0, "z": 0 }, "orbital": { "n": 1, "l": 0, "m": 0 } }
+  ],
+  "events": []
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Helium Atom",
+  "description": "Helium: 2 protons, 2 neutrons, 2 electrons (spin up and spin down in 1s)",
+  "particles": [
+    { "type": "proton", "position": { "x": -1.5, "y": 0, "z": 0 } },
+    { "type": "proton", "position": { "x": 1.5, "y": 0, "z": 0 } },
+    { "type": "neutron", "position": { "x": 0, "y": -1.5, "z": 0 } },
+    { "type": "neutron", "position": { "x": 0, "y": 1.5, "z": 0 } },
+    { "type": "electron", "position": { "x": 0, "y": 0, "z": 0 }, "spin": 0.5, "orbital": { "n": 1, "l": 0, "m": 0 } },
+    { "type": "electron", "position": { "x": 0, "y": 0, "z": 0 }, "spin": -0.5, "orbital": { "n": 1, "l": 0, "m": 0 } }
+  ],
+  "events": []
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Photon Emission",
+  "description": "An excited hydrogen atom emits a photon as the electron drops from 2p to 1s",
+  "particles": [
+    { "type": "proton", "position": { "x": 0, "y": 0, "z": 0 } },
+    { "type": "electron", "position": { "x": 0, "y": 0, "z": 0 }, "orbital": { "n": 2, "l": 1, "m": 0 } }
+  ],
+  "events": [
+    {
+      "time": 500,
+      "action": "emit",
+      "electronIndex": 1,
+      "targetOrbital": { "n": 1, "l": 0, "m": 0 },
+      "particle": { "type": "photon", "position": { "x": 0, "y": 0, "z": 0 }, "direction": { "x": 1, "y": 0, "z": 0 }, "energy": 10.2 }
+    }
+  ]
+}
