@@ -65,6 +65,15 @@ viewport.addEventListener('click', (event) => {
   }
 });
 
+// Toggle particle labels with L key
+let labelsVisible = true;
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'l' || e.key === 'L') {
+    labelsVisible = !labelsVisible;
+    particleManager.setLabelsVisible(labelsVisible);
+  }
+});
+
 // Animation loop
 let lastTime = performance.now();
 

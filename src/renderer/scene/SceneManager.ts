@@ -1,11 +1,13 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { DEFAULT_ATOM_RADIUS_FM } from '../../shared/constants';
 
 export class SceneManager {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   renderer: THREE.WebGLRenderer;
+  labelRenderer: CSS2DRenderer;
   controls: OrbitControls;
   private container: HTMLElement;
   private atomBoundary: THREE.Mesh;
@@ -24,6 +26,13 @@ export class SceneManager {
     this.renderer.setSize(container.clientWidth, container.clientHeight);
     this.renderer.setPixelRatio(window.devicePixelRatio);
     container.appendChild(this.renderer.domElement);
+
+    this.labelRenderer = new CSS2DRenderer();
+    this.labelRenderer.setSize(container.clientWidth, container.clientHeight);
+    this.labelRenderer.domElement.style.position = 'absolute';
+    this.labelRenderer.domElement.style.top = '0';
+    this.labelRenderer.domElement.style.pointerEvents = 'none';
+    container.appendChild(this.labelRenderer.domElement);
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
@@ -57,10 +66,12 @@ export class SceneManager {
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
+    this.labelRenderer.setSize(w, h);
   }
 
   render(): void {
     this.controls.update();
     this.renderer.render(this.scene, this.camera);
+    this.labelRenderer.render(this.scene, this.camera);
   }
 }

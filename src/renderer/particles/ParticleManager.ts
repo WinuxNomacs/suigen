@@ -3,12 +3,15 @@ import { ParticleData, ParticleType, Vec3, OrbitalState } from '../../shared/typ
 import { createParticleMesh } from './ParticleFactory';
 import { createOrbitalMesh } from './OrbitalMesh';
 import { PhotonTrail } from './PhotonTrail';
+import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { createParticleLabel, updateLabelText } from './ParticleLabels';
 
 interface SceneParticle {
   data: ParticleData;
   mesh: THREE.Mesh;
   orbitalMesh?: THREE.Object3D;
   trail?: PhotonTrail;
+  label?: CSS2DObject;
 }
 
 let nextId = 1;
@@ -38,6 +41,10 @@ export class ParticleManager {
     this.scene.add(mesh);
 
     const sp: SceneParticle = { data, mesh };
+
+    const label = createParticleLabel(data);
+    mesh.add(label);
+    sp.label = label;
 
     if (type === 'electron' && data.orbital) {
       sp.orbitalMesh = createOrbitalMesh(data.orbital);
@@ -99,6 +106,7 @@ export class ParticleManager {
     sp.data.orbital = { ...orbital };
     sp.orbitalMesh = createOrbitalMesh(orbital);
     this.scene.add(sp.orbitalMesh);
+    if (sp.label) updateLabelText(sp.label, sp.data);
   }
 
   updateTrails(time: number): void {
@@ -107,6 +115,14 @@ export class ParticleManager {
         const pos = new THREE.Vector3(sp.data.position.x, sp.data.position.y, sp.data.position.z);
         const dir = new THREE.Vector3(sp.data.direction.x, sp.data.direction.y, sp.data.direction.z).normalize();
         sp.trail.update(pos, dir, time);
+      }
+    }
+  }
+
+  setLabelsVisible(visible: boolean): void {
+    for (const sp of this.particles.values()) {
+      if (sp.label) {
+        sp.label.visible = visible;
       }
     }
   }
