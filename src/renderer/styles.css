@@ -10,11 +10,12 @@ body {
 
 #app {
   display: grid;
-  grid-template-columns: 60px 1fr 200px;
+  grid-template-columns: 60px 1fr 280px;
   grid-template-rows: 1fr 48px;
   height: 100vh;
 }
 
+/* Toolbar */
 #toolbar {
   grid-row: 1;
   grid-column: 1;
@@ -41,13 +42,16 @@ body {
 .particle-btn:hover { background: #2a2a4e; }
 .particle-btn.active { border-color: #66aaff; background: #1a2a4e; }
 
+/* Viewport */
 #viewport {
   grid-row: 1;
   grid-column: 2;
   overflow: hidden;
+  position: relative;
 }
 
-#properties {
+/* Info Panel */
+#info-panel {
   grid-row: 1;
   grid-column: 3;
   padding: 12px;
@@ -56,14 +60,211 @@ body {
   overflow-y: auto;
 }
 
-#properties h3 {
+#info-panel h3 {
   font-size: 14px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   color: #88aaff;
 }
 
 .hint { color: #666; font-size: 12px; }
 
+/* Scenario Gallery */
+.scenario-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.scenario-card {
+  padding: 10px;
+  background: #1a1a2e;
+  border: 1px solid #333;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.scenario-card:hover {
+  border-color: #66aaff;
+  background: #1a2a4e;
+}
+
+.sandbox-card {
+  border-style: dashed;
+  margin-top: 4px;
+}
+
+.card-name {
+  font-size: 11px;
+  color: #88aaff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ddd;
+  margin-bottom: 4px;
+}
+
+.card-summary {
+  font-size: 11px;
+  color: #888;
+  line-height: 1.4;
+}
+
+/* Back button */
+.back-btn {
+  background: none;
+  border: none;
+  color: #66aaff;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 12px;
+}
+
+.back-btn:hover { text-decoration: underline; }
+
+/* Description */
+.desc-header {
+  margin-bottom: 12px;
+}
+
+.desc-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ddd;
+  margin-bottom: 4px;
+}
+
+.desc-summary {
+  font-size: 12px;
+  color: #999;
+  font-style: italic;
+}
+
+.desc-sections {
+  margin-bottom: 12px;
+}
+
+.desc-sections details {
+  margin-bottom: 6px;
+  border: 1px solid #222;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.desc-sections summary {
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #aab;
+  cursor: pointer;
+  background: #151528;
+}
+
+.desc-sections summary:hover { color: #ccd; }
+
+.desc-sections details > p {
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #bbb;
+}
+
+/* Science toggle */
+.toggle-science {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  background: #151528;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #88aaff;
+  font-size: 12px;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+.toggle-science:hover { background: #1a2a4e; }
+
+.science-content {
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.sci-narrative {
+  color: #aab;
+  margin-bottom: 10px;
+}
+
+.sci-equations {
+  margin-bottom: 10px;
+}
+
+.equation {
+  padding: 4px 0;
+  border-bottom: 1px solid #1a1a2e;
+}
+
+.eq-label {
+  color: #888;
+  font-size: 11px;
+}
+
+.eq-tex {
+  display: block;
+  font-family: 'Georgia', serif;
+  color: #ccddff;
+  padding: 2px 0 2px 8px;
+  font-size: 13px;
+}
+
+.sci-constants {
+  color: #888;
+  font-size: 11px;
+}
+
+.sci-constants ul {
+  list-style: none;
+  padding-left: 8px;
+}
+
+.sci-constants li::before {
+  content: "\2022 ";
+  color: #555;
+}
+
+/* Legend */
+#legend {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  display: flex;
+  gap: 12px;
+  background: rgba(10, 10, 26, 0.8);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* Timeline */
 #timeline {
   grid-row: 2;
   grid-column: 1 / -1;
@@ -89,3 +290,14 @@ body {
 
 #timeline label { color: #888; font-size: 12px; }
 #time-display { margin-left: auto; font-family: monospace; font-size: 13px; }
+
+/* CSS2D Labels */
+.particle-label {
+  font-size: 10px;
+  color: #aaa;
+  background: rgba(10, 10, 26, 0.7);
+  padding: 1px 5px;
+  border-radius: 3px;
+  pointer-events: none;
+  white-space: nowrap;
+}

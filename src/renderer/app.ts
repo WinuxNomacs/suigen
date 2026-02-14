@@ -4,8 +4,7 @@ import { ParticleManager } from './particles/ParticleManager';
 import { SimulationEngine } from './physics/SimulationEngine';
 import { Toolbar } from './ui/Toolbar';
 import { Timeline } from './ui/Timeline';
-import { PropertiesPanel } from './ui/PropertiesPanel';
-import { ScenarioMenu } from './ui/ScenarioMenu';
+import { InfoPanel } from './ui/InfoPanel';
 
 const viewport = document.getElementById('viewport')!;
 const sceneManager = new SceneManager(viewport);
@@ -14,9 +13,20 @@ const engine = new SimulationEngine(particleManager);
 
 const toolbar = new Toolbar();
 const timeline = new Timeline(engine);
-const properties = new PropertiesPanel();
-new ScenarioMenu(engine);
+const infoPanel = new InfoPanel(document.getElementById('info-panel')!, engine);
 
+// Add color legend to viewport
+const legend = document.createElement('div');
+legend.id = 'legend';
+legend.innerHTML = `
+  <div class="legend-item"><span class="legend-dot" style="background:#ff4444"></span> proton</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#4488ff"></span> electron</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#888888"></span> neutron</div>
+  <div class="legend-item"><span class="legend-dot" style="background:#ffdd44"></span> photon</div>
+`;
+viewport.appendChild(legend);
+
+// Raycaster
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
@@ -48,13 +58,14 @@ viewport.addEventListener('click', (event) => {
     if (intersects.length > 0) {
       const id = intersects[0].object.userData.particleId;
       const p = particleManager.getParticle(id);
-      if (p) properties.showParticle(p.data);
+      if (p) infoPanel.showParticle(p.data);
     } else {
-      properties.clear();
+      infoPanel.clearSelection();
     }
   }
 });
 
+// Animation loop
 let lastTime = performance.now();
 
 function animate(): void {
