@@ -10,7 +10,7 @@ Order: science accuracy first, then interaction bugs, then validation and tests,
 
 The app aims to be scientifically accurate (README, "Accuracy & Validation"). These items make the shipped content match the physics it describes.
 
-- [ ] **1.1 Fix the Compton scattering energy** ([scenarios/compton-scattering.json](scenarios/compton-scattering.json))
+- [x] **1.1 Fix the Compton scattering energy** ([scenarios/compton-scattering.json](scenarios/compton-scattering.json))
   - Problem: a 100 eV photon scattered at 45 degrees comes out at 99.994 eV, but the scenario shows 80 eV.
   - **Decision (2026-11-03): 100 keV photon scattered at 90 deg.** Computed with E' = E / (1 + (E / m_e c^2)(1 - cos θ)), m_e c^2 = 510,998.95 eV:
     - Outgoing photon: 83,633.4 eV (-16.4%), wavelength 12.40 -> 14.82 pm, direction (0, 1, 0).
@@ -19,18 +19,19 @@ The app aims to be scientifically accurate (README, "Accuracy & Validation"). Th
   - Update `scientific.narrative`, `equations` and `constants` to these numbers. Mention Compton's 1923 molybdenum X-ray experiment in the "Fun fact" text.
   - Done when: photon energies in the JSON match the Compton formula to within 0.1%.
 
-- [ ] **1.2 Show the electron recoil in Compton scattering**
+- [x] **1.2 Show the electron recoil in Compton scattering**
   - Problem: the narrative says the electron takes momentum, but nothing moves it.
   - Fix: at the scattering event, swap the electron for a moving one (`remove` + `spawn` with a `direction`), aimed according to momentum conservation. A new `move` event in [SimulationEngine.ts](src/renderer/physics/SimulationEngine.ts) would be cleaner if this comes up again.
   - Done when: the electron moves away at the correct recoil angle after the scattering event.
 
-- [ ] **1.3 Show that time is slowed down**
+- [x] **1.3 Show that time is slowed down**
   - Problem: photons move 50 fm per displayed fs ([constants.ts](src/shared/constants.ts), `VISUAL_SPEED_FM_PER_FS`). Real light covers about 3.0e8 fm per fs, so the animation is about 6 million times slower than labeled. A photon crossing 80,000 fm really takes 0.00027 fs, not 1600 fs.
   - **Decision (2026-11-03): show real time.** Keep the animation speed; the timeline shows real time = animation time x 1.668e-7 (50 / c in fm/fs), with units chosen automatically (fs / as / zs). Example: a photon crossing 80,000 fm shows 267 zs.
-  - Open issue: scripted waits are not light travel. The photon-emission scenario emits at animation time 500 (83 zs real), but the real 2p lifetime is about 1.6 ns, roughly 10^13 times longer. Such gaps must be marked as compressed (for example "~1.6 ns later") instead of showing a fake real time.
+  - Resolved: scenarios declare `compressions` (tick spans that stand for a real duration). The timeline shows "fast-forward: <label>" while one plays and "≈" afterwards.
+  - Original issue: scripted waits are not light travel. The photon-emission scenario emits at animation time 500 (83 zs real), but the real 2p lifetime is about 1.6 ns, roughly 10^13 times longer. Such gaps must be marked as compressed (for example "~1.6 ns later") instead of showing a fake real time.
   - Done when: every time on screen is either real or clearly marked as compressed.
 
-- [ ] **1.4 Draw electron clouds at the right size** ([OrbitalMesh.ts:6](src/renderer/particles/OrbitalMesh.ts#L6))
+- [x] **1.4 Draw electron clouds at the right size** ([OrbitalMesh.ts:6](src/renderer/particles/OrbitalMesh.ts#L6))
   - Problem: the cloud radius is `n^2 * a0 * 0.4`, so the 1s cloud is 21 pm wide while the scenario text says the electron is most likely found at a0 (52.9 pm). The 2p cloud (85 pm) extends past the atom outline at 53,000 fm.
   - **Decision (2026-11-03): outer surface at the 90% boundary, inner sphere at the most likely distance.** The electron is inside the outer surface 90% of the time, as in textbook orbital pictures. Remove the unexplained 0.4 and say what the sizes mean in code and in the science panel.
   - Radii in units of a0 (52.918 pm), distance from the nucleus, computed by integrating the hydrogen radial probability (averages match a0/2 * (3n^2 - l(l+1))):
@@ -47,7 +48,7 @@ The app aims to be scientifically accurate (README, "Accuracy & Validation"). Th
   - Follow-up: the 4p cloud is about 1.72e6 fm wide (32.6x the current 53,000 fm atom outline). Resize the atom outline sphere ([SceneManager.ts](src/renderer/scene/SceneManager.ts)), the starting camera position and the camera's far distance (500,000), and check that photon start positions (-80,000 fm) are still outside the clouds.
   - Done when: cloud sizes match the table, and the hydrogen scenario text states both the most likely distance and the 90% boundary.
 
-- [ ] **1.5 List simplifications in the app**
+- [x] **1.5 List simplifications in the app**
   - Problem: the README requires approximation warnings; the UI shows none.
   - Fix: add a "Simplifications" section to the science panel in [InfoPanel.ts](src/renderer/ui/InfoPanel.ts), covering slowed time, no forces, straight-line photons, hydrogen-like energies only, round and dumbbell shapes only, and the absorption tolerance (±0.05 eV, much wider than real line widths).
   - Done when: every scenario and the sandbox show the list.
@@ -67,7 +68,7 @@ The app aims to be scientifically accurate (README, "Accuracy & Validation"). Th
   - Done when: rotating and panning never place or deselect particles.
 
 - [ ] **2.3 Make particles visible and clickable**
-  - Problem: particles are 3 fm wide while the camera starts about 130,000 fm away, so they render smaller than a pixel. Clicking one to inspect it is practically impossible. (Not checked visually yet: confirm first.)
+  - Problem: particles are 3 fm wide while the camera starts 150,000 fm or more away, so they render smaller than a pixel. Clicking one to inspect it is practically impossible. Confirmed in screenshots 2026-11-03: only labels are visible.
   - Fix: give particles a minimum size on screen (sprites with `sizeAttenuation: false`, or scale by camera distance), and raycast against that size or the labels.
   - Done when: every particle in every scenario can be seen and clicked from the starting camera position.
 
@@ -75,6 +76,11 @@ The app aims to be scientifically accurate (README, "Accuracy & Validation"). Th
   - Problem: new particles, and all particles after rewinding, get visible labels even when labels are switched off.
   - Fix: keep `labelsVisible` in `ParticleManager` and apply it in `addParticle`.
   - Done when: hiding labels lasts through placing particles, rewinding and loading scenarios.
+
+- [ ] **2.6 Labels at the nucleus overlap**
+  - Problem: the proton and electron labels sit at the same point (electrons are placed at the nucleus), so they draw on top of each other ("el proton s)").
+  - Fix: offset the electron label to the cloud's edge, or merge co-located labels into one line.
+  - Done when: every label in every scenario is readable from the starting camera position.
 
 - [ ] **2.5 Remove photons that leave the scene**
   - Problem: photons that miss keep flying and are tracked forever.
@@ -116,3 +122,9 @@ The app aims to be scientifically accurate (README, "Accuracy & Validation"). Th
 ## Done
 
 _Move finished items here with their commit hash._
+
+- **Phase 1 (1.1-1.5)**: `5581ca7` on branch `phase-1-science-accuracy`. Verified with typecheck, lint and Electron screenshots of every scenario.
+  - Time model: animation ticks, light moves 5,000 fm per tick (`LIGHT_SPEED_FM_PER_TICK`), so 1 tick = 1.668e-5 fs real. Photon start positions moved to ±600,000 fm, outside the 2p cloud (423,000 fm).
+  - Cloud radii computed at load from the hydrogen radial functions ([physics/hydrogen.ts](src/renderer/physics/hydrogen.ts)); matches the table in 1.4.
+  - Removed the "atom boundary" sphere (it marked a0, which no longer matches any drawn surface); the camera now frames each scenario's `extent`.
+  - Also fixed factual errors found in the scenario text: femtometer size (was 1000x off), X-ray image contrast, how the Sun makes deuterium, "all light comes from electron drops", hydrogen abundance, the stadium comparison (was about 8x off), a description of a glow effect that does not exist, and the deuteron capture narrative.
