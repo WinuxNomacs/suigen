@@ -42,8 +42,25 @@ cd suigen
 | `npm run web` | Serve the app for a browser |
 | `npm run typecheck` | Type-check with `tsc` |
 | `npm run lint` | Lint with ESLint |
+| `npm test` | Run the Vitest suite (physics, engine, scenario validation) |
 | `npm run package` | Build a runnable app in `out/` for the current OS |
 | `npm run make` | Build installers (Windows: Squirrel; macOS: zip; Linux: deb/rpm, built on Linux) |
+
+---
+
+## Status
+
+The requirements below describe where the project is heading. This is what exists today:
+
+| Area | Built | Not yet |
+|---|---|---|
+| Scenarios | Six presets (hydrogen, helium, photon absorption and emission, Compton scattering, deuterium formation), each with plain-language and scientific explanations, checked by a validator and tests | Loading or saving your own scenario files |
+| Sandbox | Place protons, neutrons, electrons and photons; a photon is absorbed when its energy matches a hydrogen transition | Dragging, deleting, editing particles |
+| Physics | Hydrogen energy levels and absorption/emission rules (s and p, up to n = 4); electron clouds sized from the hydrogen radial probability; real elapsed time | Forces (Coulomb, nuclear), field visualization, Pauli and uncertainty enforcement, d and f orbitals |
+| Architecture | All logic in the renderer; the main process opens the window | Worker threads, IPC, save/export |
+| Accuracy | Every simplification is listed in the app's science panel | Measurement tools |
+
+Ongoing work is tracked in [upcoming-changes.md](upcoming-changes.md).
 
 ---
 
