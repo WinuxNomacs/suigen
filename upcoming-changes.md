@@ -139,6 +139,14 @@ Chosen 2026-11-03. From the README's interaction patterns: select, delete and dr
 
 - [x] **5.4 Tests**: engine tests for `remove` and `move` across rewinds and for absorption at a moved atom; validator tests for `move`; the Electron interaction script extended with delete and drag.
 
+## Phase 6: Continuous integration
+
+Chosen 2026-11-03 (recommended earlier as small and protective of phases 1-5).
+
+- [x] **6.1 GitHub Actions** ([.github/workflows/ci.yml](.github/workflows/ci.yml)): type-check, lint, tests and web build on ubuntu, macOS and Windows with Node 22 (oldest supported) and 26 (current LTS); packaging on all three OSes for pushes to `main` and manual runs. Actions pinned to commit SHAs, read-only token, no Electron download where it isn't needed.
+- [x] **6.2 Line endings**: `*.json text eol=lf` in `.gitattributes`, so the generated JSON Schema matches its snapshot test on Windows checkouts.
+- [x] **6.3 README badge** for CI status.
+
 ---
 
 ## Done
