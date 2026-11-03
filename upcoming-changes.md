@@ -147,6 +147,15 @@ Chosen 2026-11-03 (recommended earlier as small and protective of phases 1-5).
 - [x] **6.2 Line endings**: `*.json text eol=lf` in `.gitattributes`, so the generated JSON Schema matches its snapshot test on Windows checkouts.
 - [x] **6.3 README badge** for CI status.
 
+## Phase 7: Dependencies up to date
+
+Requested 2026-11-03: upgrade Node and bring every package current.
+
+- [x] **7.1 Node 26.13.0 LTS** on this machine (`brew upgrade node`, from the end-of-life 25.6.1).
+- [x] **7.2 Packages to latest**: Vitest 5.1.0, ESLint 10.14.0 (+ `@eslint/js` 10.0.1), three and `@types/three` 0.187.0, Electron 45.2.2, TypeScript 6.0.3. `eslint-plugin-import` (supports ESLint only up to 9) replaced by `eslint-plugin-import-x` 4.17.1.
+- [x] **7.3 TypeScript 6 config**: removed the deprecated, unused `baseUrl`; `strict` is now on (the TS 6 default, set explicitly). It found one real issue: a particle with energy 0 would have shown a stray "0" in the info panel.
+- [ ] **7.4 TypeScript 7** (latest is 7.0.2): blocked until typescript-eslint supports it (8.72.1 peer range is `>=4.8.4 <6.1.0`). Recheck on typescript-eslint releases.
+
 ---
 
 ## Done
@@ -174,3 +183,6 @@ _Move finished items here with their commit hash._
 - **Phase 5 (5.1-5.4)**: `8dea1d5`. `npm test`: 42 tests pass. Scripted Electron run with real mouse and key events: 10/10 phase 5 checks (select and highlight, Escape, drag moves the atom with its cloud, camera stays put during a particle drag, rewind restores the position, Delete key, Delete button, empty-space drag still free), and the 12 phase 2 checks still pass.
   - Bug caught by the Electron run before commit: releasing a drag cleared the drag state before computing the drop position, so every drag snapped back.
 - **Phase 6 (6.1-6.3)**: `8bb32f9` (CI), `4ae2800` (plan). First GitHub Actions run (41740227403) passed all 9 jobs: `check` on ubuntu, macos and windows with Node 22.x and 26.x (typecheck, lint, tests, web build), and `package` on all three OSes.
+- **Phase 7 (7.1-7.3)**: Node 26.13.0; typecheck, lint, 42 tests, web build (707.44 kB, gzip 182.84 kB), `npm run package` (darwin arm64) and a launch of the packaged app all pass; the scripted Electron checks pass 22/22 (12 phase 2, 10 phase 5) on three 0.187. Lint rules checked to still fire (unresolved import, `any`, unused variable, `innerHTML`).
+  - `npm audit`: still 34 moderate, 0 high. All are `minimatch` < 11.0.1 (GHSA-g3hv-75wg-m249) and `glob` 9-14.0.1 (GHSA-3g3m-2fjr-6pw4) pinned inside Electron Forge 8, ESLint 10 and typescript-eslint, which are already at their latest versions. npm's suggested fix downgrades them. Dev tooling only.
+  - `fsevents` install script denied in `allowScripts` (npm 11.20 asks): its prebuilt binary ships in the package, so the script isn't needed.

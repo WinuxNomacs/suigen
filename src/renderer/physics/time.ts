@@ -18,7 +18,6 @@ export function realTime(ticks: number, fsPerTick: number, compressions: TimeCom
   let fs = 0;
   let cursor = 0;
   let approximate = false;
-  let activeLabel: string | undefined;
 
   for (const c of sorted) {
     if (ticks <= c.start) break;
@@ -33,7 +32,7 @@ export function realTime(ticks: number, fsPerTick: number, compressions: TimeCom
   }
 
   fs += (ticks - cursor) * fsPerTick;
-  return { fs, approximate, activeLabel };
+  return { fs, approximate };
 }
 
 const UNITS: Array<[string, number]> = [

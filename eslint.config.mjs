@@ -1,7 +1,8 @@
-// ESLint 9 flat config. Same rule sets as the former .eslintrc.json.
+// ESLint 10 flat config. eslint-plugin-import-x replaces eslint-plugin-import, which supports ESLint only up to 9.
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
-import importPlugin from 'eslint-plugin-import';
+import { importX } from 'eslint-plugin-import-x';
+import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
 import globals from 'globals';
 
 export default tseslint.config(
@@ -11,9 +12,9 @@ export default tseslint.config(
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
-      importPlugin.flatConfigs.recommended,
-      importPlugin.flatConfigs.electron,
-      importPlugin.flatConfigs.typescript,
+      importX.flatConfigs.recommended,
+      importX.flatConfigs.electron,
+      importX.flatConfigs.typescript,
     ],
     languageOptions: {
       ecmaVersion: 'latest',
@@ -21,7 +22,7 @@ export default tseslint.config(
       globals: { ...globals.browser, ...globals.node },
     },
     settings: {
-      'import/resolver': { typescript: true },
+      'import-x/resolver-next': [createTypeScriptImportResolver()],
     },
     rules: {
       'no-restricted-syntax': ['error', {

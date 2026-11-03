@@ -186,7 +186,7 @@ export class InfoPanel {
       line(`z: ${p.position.z.toFixed(1)} fm`),
       line(`spin: ${p.spin}`),
       p.orbital && line(`orbital: n=${p.orbital.n}, l=${p.orbital.l}, m=${p.orbital.m}`),
-      p.energy && line(`energy: ${formatEnergy(p.energy)}`),
+      p.energy !== undefined && line(`energy: ${formatEnergy(p.energy)}`),
       p.speed !== undefined && line(`speed: ${p.speed} c`),
       del,
       h('p', { class: 'hint' }, 'Drag a marker to move it (a nucleus moves with its electron clouds). Esc clears the selection.'),
