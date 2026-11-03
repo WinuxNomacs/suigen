@@ -27,7 +27,7 @@ The app aims to be scientifically accurate (README, "Accuracy & Validation"). Th
 - [x] **1.3 Show that time is slowed down**
   - Problem: photons move 50 fm per displayed fs ([constants.ts](src/shared/constants.ts), `VISUAL_SPEED_FM_PER_FS`). Real light covers about 3.0e8 fm per fs, so the animation is about 6 million times slower than labeled. A photon crossing 80,000 fm really takes 0.00027 fs, not 1600 fs.
   - **Decision (2026-11-03): show real time.** Keep the animation speed; the timeline shows real time = animation time x 1.668e-7 (50 / c in fm/fs), with units chosen automatically (fs / as / zs). Example: a photon crossing 80,000 fm shows 267 zs.
-  - Resolved: scenarios declare `compressions` (tick spans that stand for a real duration). The timeline shows "fast-forward: <label>" while one plays and "≈" afterwards.
+  - Resolved: scenarios declare `compressions` (tick spans that stand for a real duration). The timeline shows `fast-forward: <label>` while one plays and "≈" afterwards.
   - Original issue: scripted waits are not light travel. The photon-emission scenario emits at animation time 500 (83 zs real), but the real 2p lifetime is about 1.6 ns, roughly 10^13 times longer. Such gaps must be marked as compressed (for example "~1.6 ns later") instead of showing a fake real time.
   - Done when: every time on screen is either real or clearly marked as compressed.
 
@@ -119,6 +119,28 @@ The app aims to be scientifically accurate (README, "Accuracy & Validation"). Th
 
 ---
 
+## Phase 5: Sandbox editing
+
+Chosen 2026-11-03. From the README's interaction patterns: select, delete and drag particles. Edits are recorded in the engine's event log like placements, so rewinding before an edit undoes it and playing forward redoes it. Loading a scenario again resets all edits.
+
+- [x] **5.1 Selection**
+  - Clicking a particle selects it: the label is highlighted, the marker grows, and the info panel shows it. Escape or clicking empty space clears the selection. If the selected particle stops existing (rewound before its spawn, absorbed, departed), the selection clears.
+
+- [x] **5.2 Delete**
+  - Delete or Backspace (not while typing in a control), or a Delete button in the particle panel, removes the selected particle by recording a `remove` event at the current time.
+  - Done when: deleting works for every particle type, and rewinding before the deletion brings the particle back.
+
+- [x] **5.3 Drag**
+  - Dragging a marker moves that particle in the horizontal plane through it. A nucleon drags its whole nucleus and the electron clouds centered on it, so an atom moves as one. Moving particles (photons in flight, a recoiling electron) can't be dragged: their path is fixed by their start point and time.
+  - The camera doesn't rotate during a particle drag. Clouds are not drag handles, otherwise a cloud filling the view would block camera rotation.
+  - Movement is limited to the scenario's framed extent. On release, one `move` event per moved particle is recorded at the current time.
+  - New event type `move` (`targetId`, `position`) in the types, the zod schema and the physics checker (the target must exist and must not be moving).
+  - Done when: dragging moves the atom, rewinding before the drag puts it back, and a photon fired after the move is absorbed at the atom's new position.
+
+- [x] **5.4 Tests**: engine tests for `remove` and `move` across rewinds and for absorption at a moved atom; validator tests for `move`; the Electron interaction script extended with delete and drag.
+
+---
+
 ## Done
 
 _Move finished items here with their commit hash._
@@ -141,3 +163,5 @@ _Move finished items here with their commit hash._
 - **Phase 4 (4.1-4.3)**: `ba00e44`. Verified typecheck, lint, 37 tests, web build, `npm run package` (darwin arm64) and a launch of the packaged app.
   - ESLint 9.39.5, not 10: eslint-plugin-import 2.32.0 supports ESLint up to 9. Lint rules were checked to still fire (unresolved import, unused variable, `any`, `innerHTML`).
   - `npm audit fix` (compatible updates only) cleared all 5 high-severity findings: 39 -> 34, all moderate. The remaining 34 trace to two packages: `minimatch` < 11.0.1 (via ESLint 9) and `glob` 9-14.0.1 (via Electron Forge 8). Fixing them needs major-version changes those tools don't support (npm's suggested "fix" downgrades to Forge 7 / ESLint 4). Dev tooling only, never shipped, and it only processes the project's own file patterns. Recheck when ESLint or Forge release updates.
+- **Phase 5 (5.1-5.4)**: `8dea1d5`. `npm test`: 42 tests pass. Scripted Electron run with real mouse and key events: 10/10 phase 5 checks (select and highlight, Escape, drag moves the atom with its cloud, camera stays put during a particle drag, rewind restores the position, Delete key, Delete button, empty-space drag still free), and the 12 phase 2 checks still pass.
+  - Bug caught by the Electron run before commit: releasing a drag cleared the drag state before computing the drop position, so every drag snapped back.
