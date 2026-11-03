@@ -1,5 +1,7 @@
 # suigen
 
+[![CI](https://github.com/WinuxNomacs/suigen/actions/workflows/ci.yml/badge.svg)](https://github.com/WinuxNomacs/suigen/actions/workflows/ci.yml)
+
 ## Project Overview
 Electron-based desktop application for real-time 3D visualization of quantum particle interactions within atomic-scale fermion fields. Scientifically accurate simulation with intuitive UI for educational and research purposes.
 

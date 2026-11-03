@@ -6,3 +6,6 @@
 # Windows scripts keep CRLF.
 *.cmd text eol=crlf
 *.ps1 text eol=crlf
+
+# JSON keeps LF so the generated JSON Schema matches its test snapshot on Windows checkouts.
+*.json text eol=lf
