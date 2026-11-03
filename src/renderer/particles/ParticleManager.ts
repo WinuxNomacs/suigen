@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import { ParticleData, ParticleType, Vec3, OrbitalState } from '../../shared/types';
-import { ORBITAL_MORPH_TICKS } from '../../shared/constants';
-import { createParticleMesh } from './ParticleFactory';
+import { NUCLEUS_CLUSTER_FM, ORBITAL_MORPH_TICKS } from '../../shared/constants';
+import { createParticleMesh, getMarker } from './ParticleFactory';
 import { createOrbitalMesh, orbitalRadius, setOrbitalOpacity, disposeOrbitalMesh } from './OrbitalMesh';
 import { PhotonTrail } from './PhotonTrail';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-import { createParticleLabel, updateLabelText } from './ParticleLabels';
+import { createParticleLabel, setLabelText, labelText } from './ParticleLabels';
 
 interface OrbitalMorph {
   from: THREE.Object3D;
@@ -20,7 +20,10 @@ interface SceneParticle {
   orbitalMesh?: THREE.Object3D;
   morph?: OrbitalMorph;
   trail?: PhotonTrail;
-  label?: CSS2DObject;
+  spawnPosition: THREE.Vector3;
+  label: CSS2DObject;
+  /** False when another particle's label speaks for this one (nucleons merged into "nucleus"). */
+  labelShown: boolean;
 }
 
 let nextId = 1;
@@ -28,6 +31,7 @@ let nextId = 1;
 export class ParticleManager {
   private particles: Map<string, SceneParticle> = new Map();
   private scene: THREE.Scene;
+  private labelsVisible = true;
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
@@ -44,21 +48,21 @@ export class ParticleManager {
       position: { ...position },
     };
 
-    const mesh = createParticleMesh(type);
+    const mesh = createParticleMesh(type, id);
     mesh.position.set(position.x, position.y, position.z);
-    mesh.userData.particleId = id;
     this.scene.add(mesh);
 
-    const sp: SceneParticle = { data, mesh };
-
     const label = createParticleLabel(data);
+    label.visible = this.labelsVisible;
     mesh.add(label);
-    sp.label = label;
+
+    const sp: SceneParticle = { data, mesh, label, labelShown: true, spawnPosition: mesh.position.clone() };
 
     if (type === 'electron' && data.orbital) {
-      sp.orbitalMesh = createOrbitalMesh(data.orbital, data.effectiveCharge);
-      sp.orbitalMesh.position.copy(mesh.position);
-      this.scene.add(sp.orbitalMesh);
+      // A bound electron is its cloud: no marker at the nucleus, and the label sits on the cloud.
+      const marker = getMarker(mesh);
+      if (marker) marker.visible = false;
+      this.attachOrbital(sp, data.orbital);
     }
 
     if (type === 'photon') {
@@ -69,13 +73,23 @@ export class ParticleManager {
     return data;
   }
 
+  private attachOrbital(sp: SceneParticle, orbital: OrbitalState): void {
+    sp.orbitalMesh = createOrbitalMesh(orbital, sp.data.effectiveCharge);
+    sp.orbitalMesh.userData.particleId = sp.data.id;
+    sp.orbitalMesh.position.copy(sp.mesh.position);
+    this.scene.add(sp.orbitalMesh);
+    // Top of the cloud: on the lobe tip for a p orbital along y, on the sphere for s.
+    sp.label.position.set(0, orbitalRadius(orbital, sp.data.effectiveCharge), 0);
+  }
+
   removeParticle(id: string): void {
     const sp = this.particles.get(id);
     if (sp) {
       this.scene.remove(sp.mesh);
       sp.mesh.geometry.dispose();
       (sp.mesh.material as THREE.Material).dispose();
-      if (sp.label) sp.label.element.remove();
+      getMarker(sp.mesh)?.material.dispose();
+      sp.label.element.remove();
       if (sp.orbitalMesh) this.removeOrbitalMesh(sp.orbitalMesh);
       if (sp.morph) this.removeOrbitalMesh(sp.morph.from);
       if (sp.trail) sp.trail.dispose(this.scene);
@@ -105,8 +119,23 @@ export class ParticleManager {
     return this.particles.get(id)?.mesh;
   }
 
-  getAllMeshes(): THREE.Mesh[] {
-    return Array.from(this.particles.values()).map(sp => sp.mesh);
+  /** Visible markers, for click picking. */
+  getMarkers(): THREE.Sprite[] {
+    const markers: THREE.Sprite[] = [];
+    for (const sp of this.particles.values()) {
+      const m = getMarker(sp.mesh);
+      if (m?.visible) markers.push(m);
+    }
+    return markers;
+  }
+
+  /** Electron clouds, for click picking when no marker was hit. */
+  getClouds(): THREE.Object3D[] {
+    const clouds: THREE.Object3D[] = [];
+    for (const sp of this.particles.values()) {
+      if (sp.orbitalMesh) clouds.push(sp.orbitalMesh);
+    }
+    return clouds;
   }
 
   // Crossfade the old orbital cloud into the new one, driven by simulation time in update().
@@ -123,10 +152,8 @@ export class ParticleManager {
       };
     }
     sp.data.orbital = { ...orbital };
-    sp.orbitalMesh = createOrbitalMesh(orbital, sp.data.effectiveCharge);
-    sp.orbitalMesh.position.copy(sp.mesh.position);
-    this.scene.add(sp.orbitalMesh);
-    if (sp.label) updateLabelText(sp.label, sp.data);
+    this.attachOrbital(sp, orbital);
+    setLabelText(sp.label, labelText(sp.data));
   }
 
   update(time: number): void {
@@ -134,11 +161,68 @@ export class ParticleManager {
       if (sp.trail && sp.data.type === 'photon' && sp.data.direction) {
         const pos = new THREE.Vector3(sp.data.position.x, sp.data.position.y, sp.data.position.z);
         const dir = new THREE.Vector3(sp.data.direction.x, sp.data.direction.y, sp.data.direction.z).normalize();
-        sp.trail.update(pos, dir, time, sp.data.energy);
+        sp.trail.update(pos, dir, time, sp.data.energy, pos.distanceTo(sp.spawnPosition));
       }
       if (sp.morph && sp.orbitalMesh) {
         this.updateMorph(sp, sp.morph, sp.orbitalMesh, time);
       }
+    }
+    this.updateSharedLabels();
+  }
+
+  // Particles drawn at the same spot share one label: nucleons within NUCLEUS_CLUSTER_FM of each other
+  // ("nucleus (2 p, 2 n)") and bound electrons in the same cloud ("2 electrons (1s)").
+  private updateSharedLabels(): void {
+    const nucleons = Array.from(this.particles.values()).filter(
+      sp => sp.data.type === 'proton' || sp.data.type === 'neutron',
+    );
+    const clusterOf = new Map<SceneParticle, SceneParticle[]>();
+    for (const sp of nucleons) {
+      let cluster: SceneParticle[] | undefined;
+      for (const other of nucleons) {
+        const c = clusterOf.get(other);
+        if (c && other.mesh.position.distanceTo(sp.mesh.position) <= NUCLEUS_CLUSTER_FM) {
+          cluster = c;
+          break;
+        }
+      }
+      if (!cluster) cluster = [];
+      cluster.push(sp);
+      clusterOf.set(sp, cluster);
+    }
+
+    for (const cluster of new Set(clusterOf.values())) {
+      cluster.forEach((sp, i) => {
+        sp.labelShown = i === 0;
+        if (i > 0) return;
+        if (cluster.length === 1) {
+          setLabelText(sp.label, labelText(sp.data));
+        } else {
+          const p = cluster.filter(c => c.data.type === 'proton').length;
+          setLabelText(sp.label, `nucleus (${p} p, ${cluster.length - p} n)`);
+        }
+      });
+    }
+
+    const clouds = new Map<string, SceneParticle[]>();
+    for (const sp of this.particles.values()) {
+      const o = sp.data.orbital;
+      if (sp.data.type !== 'electron' || !o) continue;
+      const pos = sp.mesh.position;
+      const key = `${pos.x},${pos.y},${pos.z}|${o.n},${o.l},${o.m}|${sp.data.effectiveCharge ?? 1}`;
+      clouds.set(key, [...(clouds.get(key) ?? []), sp]);
+    }
+    for (const group of clouds.values()) {
+      group.forEach((sp, i) => {
+        sp.labelShown = i === 0;
+        if (i > 0) return;
+        const own = labelText(sp.data);
+        setLabelText(sp.label, group.length === 1 ? own : own.replace('electron', `${group.length} electrons`));
+      });
+    }
+
+    for (const sp of this.particles.values()) {
+      sp.label.visible = this.labelsVisible && sp.labelShown;
     }
   }
 
@@ -164,10 +248,9 @@ export class ParticleManager {
   }
 
   setLabelsVisible(visible: boolean): void {
+    this.labelsVisible = visible;
     for (const sp of this.particles.values()) {
-      if (sp.label) {
-        sp.label.visible = visible;
-      }
+      sp.label.visible = visible && sp.labelShown;
     }
   }
 

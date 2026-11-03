@@ -135,7 +135,20 @@ export class SimulationEngine {
       });
     }
 
+    this.removeDeparted();
     this.checkAbsorptions();
+  }
+
+  // A moving particle heading away from the origin beyond twice the framed extent has left the scene.
+  // Position depends only on time, so replaying after a rewind removes it at the same moment.
+  private removeDeparted(): void {
+    const limit = 2 * this.extent;
+    for (const [id, m] of [...this.motions]) {
+      const pos = this.particleManager.getParticle(id)?.data.position;
+      if (!pos) continue;
+      const outward = pos.x * m.direction.x + pos.y * m.direction.y + pos.z * m.direction.z > 0;
+      if (outward && Math.hypot(pos.x, pos.y, pos.z) > limit) this.remove(id);
+    }
   }
 
   // User-placed photons are absorbed when they enter an electron cloud with matching energy.

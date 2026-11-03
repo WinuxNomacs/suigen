@@ -34,6 +34,9 @@ export const FS_PER_TICK = LIGHT_SPEED_FM_PER_TICK / SPEED_OF_LIGHT_FM_PER_FS; /
 export const STEP_TICKS = 10; // step forward/back buttons
 export const ORBITAL_MORPH_TICKS = 50; // visual crossfade between clouds; not a physical duration
 
+// Nucleons closer than this share one label. Nuclei are a few fm across; atoms are ~100,000 fm.
+export const NUCLEUS_CLUSTER_FM = 20;
+
 // Camera framing when no scenario sets the extent (sandbox): fits the 2p cloud's 90% surface.
 export const DEFAULT_SCENE_EXTENT_FM = 8 * BOHR_RADIUS_FM;
 

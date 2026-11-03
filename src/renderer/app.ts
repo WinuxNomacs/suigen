@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { SceneManager } from './scene/SceneManager';
 import { ParticleManager } from './particles/ParticleManager';
+import { particleIdOf } from './particles/ParticleFactory';
 import { SimulationEngine } from './physics/SimulationEngine';
 import { Toolbar } from './ui/Toolbar';
 import { Timeline } from './ui/Timeline';
@@ -64,8 +65,20 @@ function placementDefaults(type: ParticleType, pos: Vec3): { position: Vec3; ext
 // Raycaster
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
+const placementPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+
+// A click that ends a camera drag is not a click: ignore it if the pointer moved more than this.
+const DRAG_THRESHOLD_PX = 5;
+let pointerDown: { x: number; y: number } | null = null;
+viewport.addEventListener('pointerdown', (event) => {
+  pointerDown = { x: event.clientX, y: event.clientY };
+});
 
 viewport.addEventListener('click', (event) => {
+  const start = pointerDown;
+  pointerDown = null;
+  if (start && Math.hypot(event.clientX - start.x, event.clientY - start.y) > DRAG_THRESHOLD_PX) return;
+
   const rect = viewport.getBoundingClientRect();
   mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
   mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
@@ -75,32 +88,29 @@ viewport.addEventListener('click', (event) => {
   const selectedType = toolbar.getSelectedType();
 
   if (selectedType) {
-    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-    const intersection = new THREE.Vector3();
-    raycaster.ray.intersectPlane(plane, intersection);
-    if (intersection) {
-      const { position, extra } = placementDefaults(selectedType, {
-        x: intersection.x,
-        y: intersection.y,
-        z: intersection.z,
-      });
+    // intersectPlane returns null when the ray misses the floor (e.g. clicking the sky).
+    const hit = raycaster.ray.intersectPlane(placementPlane, new THREE.Vector3());
+    if (hit) {
+      const { position, extra } = placementDefaults(selectedType, { x: hit.x, y: hit.y, z: hit.z });
       engine.addUserParticle(selectedType, position, extra);
       toolbar.clearSelection();
     }
+    return;
+  }
+
+  // Markers take priority over clouds, so the nucleus can be picked inside an electron cloud.
+  const hits = raycaster.intersectObjects(particleManager.getMarkers(), false);
+  if (hits.length === 0) hits.push(...raycaster.intersectObjects(particleManager.getClouds(), true));
+  const id = hits.length > 0 ? particleIdOf(hits[0].object) : undefined;
+  const p = id ? particleManager.getParticle(id) : undefined;
+  if (p) {
+    infoPanel.showParticle(p.data);
   } else {
-    const meshes = particleManager.getAllMeshes();
-    const intersects = raycaster.intersectObjects(meshes);
-    if (intersects.length > 0) {
-      const id = intersects[0].object.userData.particleId;
-      const p = particleManager.getParticle(id);
-      if (p) infoPanel.showParticle(p.data);
-    } else {
-      infoPanel.clearSelection();
-    }
+    infoPanel.clearSelection();
   }
 });
 
-// Toggle particle labels with L key
+// Toggle particle labels with L key (the manager keeps the setting for particles added later)
 let labelsVisible = true;
 document.addEventListener('keydown', (e) => {
   if (e.key === 'l' || e.key === 'L') {

@@ -32,11 +32,12 @@ export class PhotonTrail {
     scene.add(this.line);
   }
 
-  update(position: THREE.Vector3, direction: THREE.Vector3, time: number, energyEv?: number): void {
+  // `traveled` caps the trail so it never extends behind the point where the photon was created.
+  update(position: THREE.Vector3, direction: THREE.Vector3, time: number, energyEv?: number, traveled = Infinity): void {
     this.points = [];
     const wavelength = drawnWavelength(energyEv);
     const amplitude = 25000;
-    const trailLength = 400000;
+    const trailLength = Math.min(400000, traveled);
     const segments = 200;
 
     const up = new THREE.Vector3(0, 1, 0);

@@ -311,6 +311,7 @@ body {
   border-radius: 3px;
   pointer-events: none;
   white-space: nowrap;
+  margin-top: -20px; /* sit above the particle marker */
 }
 
 /* Simplifications list */

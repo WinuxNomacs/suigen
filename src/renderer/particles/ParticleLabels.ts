@@ -8,7 +8,7 @@ export function formatEnergy(ev: number): string {
   return `${+ev.toPrecision(4)} eV`;
 }
 
-function labelText(p: ParticleData): string {
+export function labelText(p: ParticleData): string {
   if (p.type === 'electron' && p.orbital) {
     const sublabel = ['s', 'p', 'd', 'f'][p.orbital.l] || '?';
     return `electron (${p.orbital.n}${sublabel})`;
@@ -24,10 +24,10 @@ export function createParticleLabel(p: ParticleData): CSS2DObject {
   div.className = 'particle-label';
   div.textContent = labelText(p);
   const label = new CSS2DObject(div);
-  label.position.set(0, 5, 0); // offset above particle
   return label;
 }
 
-export function updateLabelText(label: CSS2DObject, p: ParticleData): void {
-  (label.element as HTMLDivElement).textContent = labelText(p);
+/** Sets the text only when it changes, so per-frame calls don't touch the DOM. */
+export function setLabelText(label: CSS2DObject, text: string): void {
+  if (label.element.textContent !== text) label.element.textContent = text;
 }
