@@ -5,40 +5,107 @@
     "title": "Building a Heavier Hydrogen",
     "summary": "Watch a proton and neutron snap together to form the nucleus of heavy hydrogen",
     "sections": {
-      "whatsHappening": "A neutron is approaching a proton. When they get close enough — within about 1 femtometer (a millionth of a billionth of a millimeter) — the strong nuclear force grabs them and pulls them together. They bind into a deuteron, the nucleus of deuterium (heavy hydrogen). A photon is released carrying away the excess binding energy.",
-      "whyItMatters": "This is the first step in nuclear fusion — the process that powers every star in the universe. Inside the Sun, protons and neutrons combine to build helium, releasing enormous amounts of energy. Deuterium formation is also being studied for fusion power reactors on Earth.",
-      "whatToWatch": "Watch the gray neutron approach the red proton from the right. When they get close, they snap together and a pulsing glow appears between them — that's the strong force binding. A yellow photon shoots away, carrying the 2.22 MeV of binding energy.",
-      "funFact": "About 1 in every 6,400 hydrogen atoms in ocean water is actually deuterium. That's enough that if we could fuse all the deuterium in a single gallon of seawater, it would produce as much energy as burning 300 gallons of gasoline!"
+      "whatsHappening": "A neutron is approaching a proton. When they get close enough — within a couple of femtometers (a femtometer is a trillionth of a millimeter) — the strong nuclear force grabs them and pulls them together. They bind into a deuteron, the nucleus of deuterium (heavy hydrogen). A photon is released carrying away the excess binding energy.",
+      "whyItMatters": "Neutrons joining protons was the first step in building the elements, in the first few minutes after the Big Bang. Stars like the Sun make deuterium a different way, from two protons, but it is the same first step on the road to helium, which releases the energy that makes stars shine. Deuterium is also the main fuel planned for fusion power reactors on Earth.",
+      "whatToWatch": "Watch the gray neutron approach the red proton from the right. The approach is fast-forwarded: a slow (thermal) neutron would take about 270 fs to cover this distance. When they meet, they bind, and a yellow gamma-ray photon shoots away carrying the 2.22 MeV of binding energy.",
+      "funFact": "About 1 in every 6,400 hydrogen atoms in ocean water is actually deuterium. If we could fuse all the deuterium in a single gallon of seawater, it would release as much energy as burning a few hundred gallons of gasoline!"
     }
   },
   "scientific": {
-    "narrative": "A free neutron approaches a proton. At distances below ~2 fm, the strong nuclear force (mediated by pion exchange) overcomes the centrifugal barrier and binds the two nucleons into a deuteron — the only bound state of the two-nucleon system. The deuteron has spin-1 (triplet state), isospin-0, and a binding energy of 2.224 MeV. The excess energy is radiated as a gamma-ray photon. The deuteron is weakly bound compared to heavier nuclei, with no excited states.",
+    "narrative": "A free neutron approaches a proton. Within about 2 fm, the attractive strong nuclear force (described at long range by pion exchange) can bind the two nucleons into a deuteron, the only bound state of the two-nucleon system. Because the neutron has no electric charge, there is no Coulomb barrier to overcome. The capture n + p → d + γ releases the binding energy, 2.224 MeV, as a gamma-ray photon. The deuteron has spin 1 (triplet state), isospin 0, and no excited states.",
     "equations": [
-      { "label": "Binding energy", "tex": "B = (m_p + m_n - m_d)c\u00b2 = 2.224 MeV" },
-      { "label": "Yukawa potential", "tex": "V(r) \u2248 -g\u00b2 e^(-m_\u03c0 r)/(4\u03c0 r)" },
-      { "label": "Deuteron spin", "tex": "J = 1 (triplet state, S=1, L=0 dominant)" }
+      {
+        "label": "Binding energy",
+        "tex": "B = (m_p + m_n - m_d)c² = 2.224 MeV"
+      },
+      {
+        "label": "Yukawa potential",
+        "tex": "V(r) ≈ -g² e^(-m_π r)/(4π r)"
+      },
+      {
+        "label": "Deuteron spin",
+        "tex": "J = 1 (triplet state, S=1, L=0 dominant)"
+      }
     ],
-    "constants": ["Deuteron binding energy: 2.224 MeV", "Strong force range: ~1-2 fm", "Pion mass: 139.6 MeV/c\u00b2", "Deuteron mass: 1875.6 MeV/c\u00b2"]
+    "constants": [
+      "Deuteron binding energy: 2.224 MeV",
+      "Strong force range: ~1-2 fm",
+      "Pion mass: 139.6 MeV/c²",
+      "Deuteron mass: 1875.6 MeV/c²"
+    ]
   },
   "particles": [
-    { "type": "proton", "position": { "x": 0, "y": 0, "z": 0 } },
-    { "id": "n1", "type": "neutron", "position": { "x": 80000, "y": 0, "z": 0 }, "direction": { "x": -1, "y": 0, "z": 0 } }
+    {
+      "type": "proton",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "id": "n1",
+      "type": "neutron",
+      "position": {
+        "x": 600000,
+        "y": 0,
+        "z": 0
+      },
+      "direction": {
+        "x": -1,
+        "y": 0,
+        "z": 0
+      }
+    }
   ],
   "events": [
     {
-      "time": 1600,
+      "time": 120,
       "action": "remove",
       "targetId": "n1"
     },
     {
-      "time": 1600,
+      "time": 120,
       "action": "spawn",
-      "particle": { "type": "neutron", "position": { "x": 1.5, "y": 0, "z": 0 } }
+      "particle": {
+        "type": "neutron",
+        "position": {
+          "x": 1.5,
+          "y": 0,
+          "z": 0
+        }
+      }
     },
     {
-      "time": 1600,
+      "time": 120,
       "action": "spawn",
-      "particle": { "type": "photon", "position": { "x": 0, "y": 0, "z": 0 }, "direction": { "x": 0, "y": 1, "z": 0 }, "energy": 2224000 }
+      "particle": {
+        "type": "photon",
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "direction": {
+          "x": 0,
+          "y": 1,
+          "z": 0
+        },
+        "energy": 2224000
+      }
     }
-  ]
+  ],
+  "compressions": [
+    {
+      "start": 0,
+      "end": 120,
+      "realFs": 272.73,
+      "label": "thermal neutron approach (2,200 m/s)"
+    }
+  ],
+  "simplifications": [
+    "The neutron's approach is fast-forwarded: a thermal neutron at 2,200 m/s takes about 273 fs to cover the 600,000 fm shown.",
+    "The gamma ray's direction is random in reality; here it goes straight up."
+  ],
+  "extent": 650000
 }

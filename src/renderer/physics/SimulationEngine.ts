@@ -1,14 +1,16 @@
-import { ScenarioEvent, SimulationState, ParticleData, ParticleType, Vec3 } from '../../shared/types';
-import { TIME_STEP_FS, VISUAL_SPEED_FM_PER_FS } from '../../shared/constants';
+import { ScenarioEvent, SimulationState, ParticleData, ParticleType, TimeCompression, Vec3 } from '../../shared/types';
+import { DEFAULT_SCENE_EXTENT_FM, FS_PER_TICK, LIGHT_SPEED_FM_PER_TICK, STEP_TICKS } from '../../shared/constants';
 import { ParticleManager } from '../particles/ParticleManager';
 import { orbitalRadius } from '../particles/OrbitalMesh';
 import { findTransition } from './transitions';
+import { RealTime, realTime } from './time';
 
 type ScenarioParticle = Partial<ParticleData> & { type: ParticleType };
 
 interface Motion {
   origin: Vec3;
   direction: Vec3;
+  speed: number; // fraction of c
   spawnTime: number;
 }
 
@@ -20,11 +22,14 @@ export class SimulationEngine {
   state: SimulationState;
   private initialParticles: ScenarioParticle[] = [];
   private events: ScenarioEvent[] = [];
+  private compressions: TimeCompression[] = [];
+  private extent = DEFAULT_SCENE_EXTENT_FM;
   private nextEventIndex = 0;
   private motions: Map<string, Motion> = new Map();
   private interactiveIds: Set<string> = new Set();
   private particleManager: ParticleManager;
   private onEvent?: (event: ScenarioEvent, particleIds: string[]) => void;
+  private onLoad?: () => void;
 
   constructor(particleManager: ParticleManager) {
     this.particleManager = particleManager;
@@ -35,12 +40,33 @@ export class SimulationEngine {
     };
   }
 
-  loadScenario(particles: ScenarioParticle[], events: ScenarioEvent[]): void {
+  loadScenario(
+    particles: ScenarioParticle[],
+    events: ScenarioEvent[],
+    compressions: TimeCompression[] = [],
+    extent = DEFAULT_SCENE_EXTENT_FM,
+  ): void {
     this.initialParticles = particles.map((p, i) => ({ ...p, id: p.id ?? `s${i}` }));
     this.events = [...events].sort((a, b) => a.time - b.time);
+    this.compressions = compressions;
+    this.extent = extent;
     this.interactiveIds.clear();
     this.rebuild();
     this.advanceTo(0);
+    this.onLoad?.();
+  }
+
+  setOnLoad(cb: () => void): void {
+    this.onLoad = cb;
+  }
+
+  /** Radius in fm the camera should frame for the loaded scenario. */
+  getExtent(): number {
+    return this.extent;
+  }
+
+  getRealTime(): RealTime {
+    return realTime(this.state.time, FS_PER_TICK, this.compressions);
   }
 
   setOnEvent(cb: (event: ScenarioEvent, particleIds: string[]) => void): void {
@@ -53,11 +79,11 @@ export class SimulationEngine {
   setSpeed(s: number): void { this.state.speed = s; }
 
   stepForward(): void {
-    this.advanceTo(this.state.time + TIME_STEP_FS * 10);
+    this.advanceTo(this.state.time + STEP_TICKS);
   }
 
   stepBack(): void {
-    this.seek(this.state.time - TIME_STEP_FS * 10);
+    this.seek(this.state.time - STEP_TICKS);
   }
 
   tick(deltaFs: number): void {
@@ -101,7 +127,7 @@ export class SimulationEngine {
     }
 
     for (const [id, m] of this.motions) {
-      const d = (time - m.spawnTime) * VISUAL_SPEED_FM_PER_FS;
+      const d = (time - m.spawnTime) * LIGHT_SPEED_FM_PER_TICK * m.speed;
       this.particleManager.updatePosition(id, {
         x: m.origin.x + m.direction.x * d,
         y: m.origin.y + m.direction.y * d,
@@ -122,7 +148,7 @@ export class SimulationEngine {
       if (this.events.some(e => e.action === 'absorb' && e.photonId === id)) continue;
 
       for (const electron of electrons) {
-        if (distance(photon.position, electron.position) >= orbitalRadius(electron.orbital!)) continue;
+        if (distance(photon.position, electron.position) >= orbitalRadius(electron.orbital!, electron.effectiveCharge)) continue;
         const target = findTransition(electron.orbital!, photon.energy);
         if (!target) continue;
         this.insertEvent({
@@ -150,6 +176,7 @@ export class SimulationEngine {
       this.motions.set(data.id, {
         origin: { ...pos },
         direction: normalize(p.direction),
+        speed: p.speed ?? 1,
         spawnTime: time,
       });
     }

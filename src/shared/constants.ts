@@ -10,8 +10,9 @@ export const BOHR_RADIUS = 5.29177210903e-11;
 export const COULOMB_CONSTANT = 8.9875517923e9;
 export const EV_TO_JOULES = 1.602176634e-19;
 
-export const FM_PER_UNIT = 1;
 export const BOHR_RADIUS_FM = BOHR_RADIUS * 1e15;
+// 1 m/s = 1e15 fm / 1e15 fs, so the speed of light has the same value in fm/fs.
+export const SPEED_OF_LIGHT_FM_PER_FS = SPEED_OF_LIGHT;
 
 export const PROTON_VISUAL_RADIUS = 3;
 export const NEUTRON_VISUAL_RADIUS = 3;
@@ -25,14 +26,26 @@ export const PARTICLE_COLORS = {
   photon: 0xffdd44,
 } as const;
 
-export const DEFAULT_ATOM_RADIUS_FM = 53000;
+// Animation time is counted in ticks. Light moves LIGHT_SPEED_FM_PER_TICK per tick, which fixes how
+// ticks convert to real time (see physics/time.ts). Nothing else about a tick is physical.
+export const TICKS_PER_REAL_SECOND = 100; // playback rate at speed 1
+export const LIGHT_SPEED_FM_PER_TICK = 5000; // a photon crosses 2,000,000 fm in 4 s at speed 1
+export const FS_PER_TICK = LIGHT_SPEED_FM_PER_TICK / SPEED_OF_LIGHT_FM_PER_FS; // ~1.668e-5 fs
+export const STEP_TICKS = 10; // step forward/back buttons
+export const ORBITAL_MORPH_TICKS = 50; // visual crossfade between clouds; not a physical duration
 
-export const DEFAULT_SPEED = 1;
-export const TIME_STEP_FS = 0.1;
+// Camera framing when no scenario sets the extent (sandbox): fits the 2p cloud's 90% surface.
+export const DEFAULT_SCENE_EXTENT_FM = 8 * BOHR_RADIUS_FM;
 
-export const FS_PER_REAL_SECOND = 100;
-export const VISUAL_SPEED_FM_PER_FS = 50;
-export const ORBITAL_MORPH_FS = 50;
+// Photon trails: the drawn wavelength is proportional to the real wavelength, anchored so a
+// 100 keV photon (12.4 pm) is drawn 60,000 fm long, then clamped to stay readable.
+export const TRAIL_REF_WAVELENGTH_PM = 12.3984198;
+export const TRAIL_REF_DRAWN_FM = 60000;
+export const TRAIL_MIN_DRAWN_FM = 20000;
+export const TRAIL_MAX_DRAWN_FM = 150000;
+
+// hc in eV·pm, for photon wavelength from energy: λ = hc / E
+export const HC_EV_PM = 1239841.98;
 
 export const RYDBERG_EV = 13.6;
 export const ABSORPTION_TOLERANCE_EV = 0.05;

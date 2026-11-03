@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
-import { DEFAULT_ATOM_RADIUS_FM } from '../../shared/constants';
+import { DEFAULT_SCENE_EXTENT_FM } from '../../shared/constants';
 
 export class SceneManager {
   scene: THREE.Scene;
@@ -10,7 +10,7 @@ export class SceneManager {
   labelRenderer: CSS2DRenderer;
   controls: OrbitControls;
   private container: HTMLElement;
-  private atomBoundary: THREE.Mesh;
+  private axes: THREE.AxesHelper;
 
   constructor(container: HTMLElement) {
     this.container = container;
@@ -19,8 +19,7 @@ export class SceneManager {
     this.scene.background = new THREE.Color(0x0a0a1a);
 
     const aspect = container.clientWidth / container.clientHeight;
-    this.camera = new THREE.PerspectiveCamera(60, aspect, 1, 500000);
-    this.camera.position.set(80000, 60000, 80000);
+    this.camera = new THREE.PerspectiveCamera(60, aspect, 1, 1);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setSize(container.clientWidth, container.clientHeight);
@@ -40,24 +39,31 @@ export class SceneManager {
 
     const ambient = new THREE.AmbientLight(0x404060, 0.5);
     this.scene.add(ambient);
-    const point = new THREE.PointLight(0xffffff, 1, 0);
-    point.position.set(100000, 100000, 100000);
-    this.scene.add(point);
+    // Directional, so lighting does not depend on the scene's scale.
+    const sun = new THREE.DirectionalLight(0xffffff, 1);
+    sun.position.set(1, 1, 1);
+    this.scene.add(sun);
 
-    const boundaryGeo = new THREE.SphereGeometry(DEFAULT_ATOM_RADIUS_FM, 32, 32);
-    const boundaryMat = new THREE.MeshBasicMaterial({
-      color: 0x4444aa,
-      transparent: true,
-      opacity: 0.05,
-      wireframe: true,
-    });
-    this.atomBoundary = new THREE.Mesh(boundaryGeo, boundaryMat);
-    this.scene.add(this.atomBoundary);
+    // Unit length, scaled to the framed extent in frame().
+    this.axes = new THREE.AxesHelper(1);
+    this.scene.add(this.axes);
 
-    const axes = new THREE.AxesHelper(DEFAULT_ATOM_RADIUS_FM * 1.2);
-    this.scene.add(axes);
+    this.frame(DEFAULT_SCENE_EXTENT_FM);
 
     window.addEventListener('resize', () => this.onResize());
+  }
+
+  /** Points the camera at the origin from far enough away to see a sphere of `extent` fm. */
+  frame(extent: number): void {
+    const halfFov = THREE.MathUtils.degToRad(this.camera.fov / 2);
+    const distance = (extent / Math.sin(halfFov)) * 1.1;
+    this.camera.position.set(1, 0.75, 1).normalize().multiplyScalar(distance);
+    this.camera.near = distance / 1e5; // lets you zoom in close to the nucleus
+    this.camera.far = distance * 100;
+    this.camera.updateProjectionMatrix();
+    this.controls.target.set(0, 0, 0);
+    this.controls.update();
+    this.axes.scale.setScalar(extent * 1.2);
   }
 
   private onResize(): void {

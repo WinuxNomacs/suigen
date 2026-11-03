@@ -20,7 +20,12 @@ export interface ParticleData {
   spin: number;
   orbital?: OrbitalState;
   direction?: Vec3;
+  /** Speed as a fraction of the speed of light. Defaults to 1 (photons). */
+  speed?: number;
+  /** Photon energy, or kinetic energy of a free particle, in eV. */
   energy?: number;
+  /** Effective nuclear charge seen by an electron; cloud sizes scale as 1/Z. Defaults to 1. */
+  effectiveCharge?: number;
 }
 
 export interface ScenarioEvent {
@@ -55,6 +60,14 @@ export interface ScientificDescription {
   constants: string[];
 }
 
+/** A span of animation ticks that stands for a real duration too long to animate. */
+export interface TimeCompression {
+  start: number;
+  end: number;
+  realFs: number;
+  label: string;
+}
+
 export interface Scenario {
   name: string;
   description: string;
@@ -62,6 +75,12 @@ export interface Scenario {
   scientific: ScientificDescription;
   particles: Array<Partial<ParticleData> & { type: ParticleType }>;
   events: ScenarioEvent[];
+  /** Real durations stood in for by compressed tick spans (see physics/time.ts). */
+  compressions?: TimeCompression[];
+  /** Scenario-specific simplifications, shown after the general list. */
+  simplifications?: string[];
+  /** Radius in fm the camera frames on load. */
+  extent?: number;
 }
 
 export interface SimulationState {

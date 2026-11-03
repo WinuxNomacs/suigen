@@ -12,22 +12,99 @@
     }
   },
   "scientific": {
-    "narrative": "The helium atom has atomic number Z=2 with a nucleus of 2 protons and 2 neutrons (helium-4, the most common isotope). Both electrons occupy the 1s orbital with opposite spin quantum numbers (m_s = +1/2 and -1/2), forming a closed shell. This configuration makes helium extremely stable and chemically inert — it has the highest ionization energy of any element (24.6 eV). The electron-electron repulsion makes an exact analytical solution impossible; the displayed orbital uses a hydrogen-like approximation with effective nuclear charge Z_eff \u2248 1.69.",
+    "narrative": "The helium atom has atomic number Z=2 with a nucleus of 2 protons and 2 neutrons (helium-4, the most common isotope). Both electrons occupy the 1s orbital with opposite spin quantum numbers (m_s = +1/2 and -1/2), forming a closed shell. This configuration makes helium extremely stable and chemically inert — it has the highest ionization energy of any element (24.6 eV). The electron-electron repulsion makes an exact analytical solution impossible; the displayed orbital uses a hydrogen-like approximation with effective nuclear charge Z_eff ≈ 1.69. The drawn cloud uses Z_eff = 27/16 = 1.6875, so its 90% surface is at 2.66 a₀ / Z_eff = 83.4 pm.",
     "equations": [
-      { "label": "Electron configuration", "tex": "1s\u00b2" },
-      { "label": "Pauli exclusion", "tex": "No two fermions can share all quantum numbers (n, l, m, m_s)" },
-      { "label": "First ionization energy", "tex": "IE\u2081 = 24.6 eV" },
-      { "label": "Effective nuclear charge", "tex": "Z_eff \u2248 1.69 (shielding by other electron)" }
+      {
+        "label": "Electron configuration",
+        "tex": "1s²"
+      },
+      {
+        "label": "Pauli exclusion",
+        "tex": "No two fermions can share all quantum numbers (n, l, m, m_s)"
+      },
+      {
+        "label": "First ionization energy",
+        "tex": "IE₁ = 24.6 eV"
+      },
+      {
+        "label": "Effective nuclear charge",
+        "tex": "Z_eff ≈ 1.69 (shielding by other electron)"
+      }
     ],
-    "constants": ["Atomic number: Z = 2", "Mass number: A = 4", "Nuclear binding energy: 28.3 MeV", "First ionization: 24.6 eV"]
+    "constants": [
+      "Atomic number: Z = 2",
+      "Mass number: A = 4",
+      "Nuclear binding energy: 28.3 MeV",
+      "First ionization: 24.6 eV"
+    ]
   },
   "particles": [
-    { "type": "proton", "position": { "x": -1.5, "y": 0, "z": 0 } },
-    { "type": "proton", "position": { "x": 1.5, "y": 0, "z": 0 } },
-    { "type": "neutron", "position": { "x": 0, "y": -1.5, "z": 0 } },
-    { "type": "neutron", "position": { "x": 0, "y": 1.5, "z": 0 } },
-    { "type": "electron", "position": { "x": 0, "y": 0, "z": 0 }, "spin": 0.5, "orbital": { "n": 1, "l": 0, "m": 0 } },
-    { "type": "electron", "position": { "x": 0, "y": 0, "z": 0 }, "spin": -0.5, "orbital": { "n": 1, "l": 0, "m": 0 } }
+    {
+      "type": "proton",
+      "position": {
+        "x": -1.5,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "type": "proton",
+      "position": {
+        "x": 1.5,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "type": "neutron",
+      "position": {
+        "x": 0,
+        "y": -1.5,
+        "z": 0
+      }
+    },
+    {
+      "type": "neutron",
+      "position": {
+        "x": 0,
+        "y": 1.5,
+        "z": 0
+      }
+    },
+    {
+      "type": "electron",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "spin": 0.5,
+      "orbital": {
+        "n": 1,
+        "l": 0,
+        "m": 0
+      },
+      "effectiveCharge": 1.6875
+    },
+    {
+      "type": "electron",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "spin": -0.5,
+      "orbital": {
+        "n": 1,
+        "l": 0,
+        "m": 0
+      },
+      "effectiveCharge": 1.6875
+    }
   ],
-  "events": []
+  "events": [],
+  "simplifications": [
+    "Each electron is drawn as a hydrogen-like 1s cloud with effective nuclear charge Z_eff = 27/16, which accounts for the electrons' repulsion only on average."
+  ],
+  "extent": 90000
 }

@@ -312,3 +312,9 @@ body {
   pointer-events: none;
   white-space: nowrap;
 }
+
+/* Simplifications list */
+.simplifications { margin-top: 12px; font-size: 12px; color: #999; }
+.simplifications summary { cursor: pointer; color: #cc9955; }
+.simplifications ul { margin: 6px 0 0 16px; }
+.simplifications li { margin-bottom: 6px; line-height: 1.4; }

@@ -6,37 +6,95 @@
     "summary": "Watch a particle of light get swallowed by a hydrogen atom",
     "sections": {
       "whatsHappening": "A photon — a tiny packet of light energy — is flying toward a hydrogen atom. When it arrives, the atom absorbs it completely. The photon vanishes, and its energy is transferred to the electron, which jumps to a higher energy level. Watch the electron cloud change shape from a sphere (1s) to a dumbbell (2p).",
-      "whyItMatters": "This is the fundamental process behind how things absorb light. It's why leaves are green (they absorb red and blue light), why your skin gets warm in sunlight, and how solar panels generate electricity. Every color you see exists because atoms absorb specific wavelengths of light.",
-      "whatToWatch": "Follow the yellow photon as it approaches from the left. Notice its wave-like trail — light behaves as both a wave and a particle. When it reaches the atom, it disappears and the blue electron cloud instantly changes from a round sphere to an elongated dumbbell shape.",
+      "whyItMatters": "This is the fundamental process behind how things absorb light. It's why leaves are green (they absorb red and blue light), why your skin gets warm in sunlight, and how solar panels generate electricity. Every color you see exists because atoms and molecules absorb specific wavelengths of light.",
+      "whatToWatch": "Follow the yellow photon as it approaches from the left. Notice its wave-like trail — light behaves as both a wave and a particle. When it reaches the atom, it disappears and the blue electron cloud quickly changes from a round sphere to an elongated dumbbell shape.",
       "funFact": "The electron can only absorb a photon with exactly the right energy — 10.2 electron volts in this case. Too much or too little, and the photon passes right through. It's like a vending machine that only accepts exact change!"
     }
   },
   "scientific": {
-    "narrative": "A photon with energy E=10.2 eV (corresponding to the Lyman-alpha transition) is incident on a hydrogen atom in the ground state (n=1, l=0, m=0). The photon energy exactly matches the energy difference between the n=1 and n=2 levels: \u0394E = 13.6(1/1\u00b2 - 1/2\u00b2) = 10.2 eV. Upon absorption, the electron transitions to the 2p state (n=2, l=1, m=0), which has a characteristic dumbbell-shaped probability distribution aligned along the y-axis.",
+    "narrative": "A photon with energy E=10.2 eV (corresponding to the Lyman-alpha transition) is incident on a hydrogen atom in the ground state (n=1, l=0, m=0). The photon energy exactly matches the energy difference between the n=1 and n=2 levels: ΔE = 13.6(1/1² - 1/2²) = 10.2 eV. Upon absorption, the electron transitions to the 2p state (n=2, l=1, m=0), which has a characteristic dumbbell-shaped probability distribution aligned along the y-axis. The 2p cloud's 90% surface is drawn at 7.99 a₀ (423 pm).",
     "equations": [
-      { "label": "Energy level difference", "tex": "\u0394E = 13.6 eV \u00d7 (1/n\u2081\u00b2 - 1/n\u2082\u00b2) = 10.2 eV" },
-      { "label": "Photon energy", "tex": "E = h\u03bd = hc/\u03bb" },
-      { "label": "Lyman-alpha wavelength", "tex": "\u03bb = 121.6 nm (ultraviolet)" },
-      { "label": "Selection rule", "tex": "\u0394l = \u00b11 (electric dipole transition)" }
+      {
+        "label": "Energy level difference",
+        "tex": "ΔE = 13.6 eV × (1/n₁² - 1/n₂²) = 10.2 eV"
+      },
+      {
+        "label": "Photon energy",
+        "tex": "E = hν = hc/λ"
+      },
+      {
+        "label": "Lyman-alpha wavelength",
+        "tex": "λ = 121.6 nm (ultraviolet)"
+      },
+      {
+        "label": "Selection rule",
+        "tex": "Δl = ±1 (electric dipole transition)"
+      }
     ],
-    "constants": ["Transition energy: 10.2 eV", "Lyman-alpha wavelength: 121.6 nm", "Rydberg energy: 13.6 eV"]
+    "constants": [
+      "Transition energy: 10.2 eV",
+      "Lyman-alpha wavelength: 121.6 nm",
+      "Rydberg energy: 13.6 eV"
+    ]
   },
   "particles": [
-    { "type": "proton", "position": { "x": 0, "y": 0, "z": 0 } },
-    { "id": "e1", "type": "electron", "position": { "x": 0, "y": 0, "z": 0 }, "orbital": { "n": 1, "l": 0, "m": 0 } }
+    {
+      "type": "proton",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "id": "e1",
+      "type": "electron",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "orbital": {
+        "n": 1,
+        "l": 0,
+        "m": 0
+      }
+    }
   ],
   "events": [
     {
       "time": 0,
       "action": "spawn",
-      "particle": { "id": "photon1", "type": "photon", "position": { "x": -80000, "y": 0, "z": 0 }, "direction": { "x": 1, "y": 0, "z": 0 }, "energy": 10.2 }
+      "particle": {
+        "id": "photon1",
+        "type": "photon",
+        "position": {
+          "x": -600000,
+          "y": 0,
+          "z": 0
+        },
+        "direction": {
+          "x": 1,
+          "y": 0,
+          "z": 0
+        },
+        "energy": 10.2
+      }
     },
     {
-      "time": 1600,
+      "time": 120,
       "action": "absorb",
       "photonId": "photon1",
       "electronId": "e1",
-      "targetOrbital": { "n": 2, "l": 1, "m": 0 }
+      "targetOrbital": {
+        "n": 2,
+        "l": 1,
+        "m": 0
+      }
     }
-  ]
+  ],
+  "simplifications": [
+    "The photon is absorbed when it reaches the nucleus. Real absorption has no single point of impact."
+  ],
+  "extent": 450000
 }

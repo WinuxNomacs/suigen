@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { ParticleData, ParticleType, Vec3, OrbitalState } from '../../shared/types';
-import { ORBITAL_MORPH_FS } from '../../shared/constants';
+import { ORBITAL_MORPH_TICKS } from '../../shared/constants';
 import { createParticleMesh } from './ParticleFactory';
 import { createOrbitalMesh, orbitalRadius, setOrbitalOpacity, disposeOrbitalMesh } from './OrbitalMesh';
 import { PhotonTrail } from './PhotonTrail';
@@ -56,7 +56,7 @@ export class ParticleManager {
     sp.label = label;
 
     if (type === 'electron' && data.orbital) {
-      sp.orbitalMesh = createOrbitalMesh(data.orbital);
+      sp.orbitalMesh = createOrbitalMesh(data.orbital, data.effectiveCharge);
       sp.orbitalMesh.position.copy(mesh.position);
       this.scene.add(sp.orbitalMesh);
     }
@@ -117,13 +117,13 @@ export class ParticleManager {
     if (sp.orbitalMesh && sp.data.orbital) {
       sp.morph = {
         from: sp.orbitalMesh,
-        fromRadius: orbitalRadius(sp.data.orbital),
-        toRadius: orbitalRadius(orbital),
+        fromRadius: orbitalRadius(sp.data.orbital, sp.data.effectiveCharge),
+        toRadius: orbitalRadius(orbital, sp.data.effectiveCharge),
         startTime,
       };
     }
     sp.data.orbital = { ...orbital };
-    sp.orbitalMesh = createOrbitalMesh(orbital);
+    sp.orbitalMesh = createOrbitalMesh(orbital, sp.data.effectiveCharge);
     sp.orbitalMesh.position.copy(sp.mesh.position);
     this.scene.add(sp.orbitalMesh);
     if (sp.label) updateLabelText(sp.label, sp.data);
@@ -134,7 +134,7 @@ export class ParticleManager {
       if (sp.trail && sp.data.type === 'photon' && sp.data.direction) {
         const pos = new THREE.Vector3(sp.data.position.x, sp.data.position.y, sp.data.position.z);
         const dir = new THREE.Vector3(sp.data.direction.x, sp.data.direction.y, sp.data.direction.z).normalize();
-        sp.trail.update(pos, dir, time);
+        sp.trail.update(pos, dir, time, sp.data.energy);
       }
       if (sp.morph && sp.orbitalMesh) {
         this.updateMorph(sp, sp.morph, sp.orbitalMesh, time);
@@ -143,7 +143,7 @@ export class ParticleManager {
   }
 
   private updateMorph(sp: SceneParticle, morph: OrbitalMorph, to: THREE.Object3D, time: number): void {
-    const p = THREE.MathUtils.clamp((time - morph.startTime) / ORBITAL_MORPH_FS, 0, 1);
+    const p = THREE.MathUtils.clamp((time - morph.startTime) / ORBITAL_MORPH_TICKS, 0, 1);
     if (p >= 1) {
       this.removeOrbitalMesh(morph.from);
       sp.morph = undefined;

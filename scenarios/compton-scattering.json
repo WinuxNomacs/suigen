@@ -1,43 +1,131 @@
 {
   "name": "Compton Scattering",
-  "description": "A photon scatters off a free electron, transferring some of its energy",
+  "description": "A 100 keV X-ray photon scatters off a free electron, transferring some of its energy",
   "layman": {
     "title": "Light Bounces Off Matter",
     "summary": "Watch what happens when a photon collides with an electron and bounces away with less energy",
     "sections": {
       "whatsHappening": "A high-energy photon is heading toward an electron. Unlike absorption (where the photon vanishes entirely), here the photon bounces off the electron like a billiard ball. The photon loses some energy in the collision and changes direction, while the electron gets knocked away. The photon keeps going but with less energy than before.",
-      "whyItMatters": "Compton scattering proved that light really does behave like a particle, not just a wave. This was one of the key experiments that launched quantum mechanics. It's also how X-ray machines create contrast — X-ray photons scatter differently off bone versus soft tissue.",
-      "whatToWatch": "Follow the yellow photon as it approaches the blue electron. At impact, the photon deflects upward and the electron recoils to the right. Notice the photon's wave trail — after scattering, its wavelength appears longer (lower energy).",
-      "funFact": "Arthur Compton won the Nobel Prize in 1927 for discovering this effect. Before his experiment, many physicists refused to believe light could behave as a particle. His billiard-ball-style calculation matched the data perfectly!"
+      "whyItMatters": "Compton scattering proved that light really does behave like a particle, not just a wave. This was one of the key experiments that launched quantum mechanics. It is also the main way X-rays interact with soft tissue in medical imaging; the scattered X-rays fog the image, so X-ray machines use grids to block them.",
+      "whatToWatch": "Follow the yellow photon as it approaches the electron. At impact, the photon turns 90° and the electron is knocked forward and down at about 40°. Notice the photon's wave trail: after scattering, its waves are about 20% longer, because its energy dropped from 100 keV to 83.6 keV.",
+      "funFact": "Arthur Compton won the Nobel Prize in 1927 for this discovery. In 1923 he aimed X-rays from a molybdenum target at graphite and found the scattered X-rays had longer wavelengths, exactly as his billiard-ball calculation predicted."
     }
   },
   "scientific": {
-    "narrative": "An incident photon scatters off a quasi-free electron. The photon transfers momentum and energy to the electron, emerging with a longer wavelength (lower energy) at a scattering angle. This is modeled as an elastic collision between the photon and electron, conserving both energy and momentum. The wavelength shift depends only on the scattering angle, not the initial photon energy.",
+    "narrative": "A 100 keV photon scatters through θ = 90° off an electron treated as free and at rest. The Compton formula gives the scattered photon energy E′ = 83.63 keV, so its wavelength grows from 12.40 pm to 14.82 pm (Δλ = λ_C = 2.43 pm at 90°). The electron carries away the difference, 16.37 keV of kinetic energy, moving at 0.247c at 39.9° from the photon's original direction, as momentum conservation requires. The wavelength shift depends only on the scattering angle, not on the initial photon energy.",
     "equations": [
-      { "label": "Compton wavelength shift", "tex": "\u0394\u03bb = (\u03bb' - \u03bb) = (h/m_e c)(1 - cos\u03b8)" },
-      { "label": "Compton wavelength of electron", "tex": "\u03bb_C = h/m_e c = 2.43 \u00d7 10\u207b\u00b9\u00b2 m" },
-      { "label": "Energy conservation", "tex": "E_\u03b3 + m_e c\u00b2 = E'_\u03b3 + E_e" }
+      {
+        "label": "Compton wavelength shift",
+        "tex": "Δλ = λ′ - λ = (h/m_e c)(1 - cos θ)"
+      },
+      {
+        "label": "Compton wavelength of electron",
+        "tex": "λ_C = h/m_e c = 2.43 × 10⁻¹² m"
+      },
+      {
+        "label": "Scattered photon energy",
+        "tex": "E′ = E / (1 + (E/m_e c²)(1 - cos θ)) = 83.63 keV"
+      },
+      {
+        "label": "Electron recoil angle",
+        "tex": "cot φ = (1 + E/m_e c²) tan(θ/2), φ = 39.9°"
+      },
+      {
+        "label": "Energy conservation",
+        "tex": "E_γ + m_e c² = E′_γ + E_e"
+      }
     ],
-    "constants": ["Compton wavelength: 2.43 pm", "Electron rest energy: 0.511 MeV", "Incident photon energy: ~100 eV (soft X-ray)"]
+    "constants": [
+      "Compton wavelength: 2.43 pm",
+      "Electron rest energy: 0.511 MeV",
+      "Incident photon: 100 keV (hard X-ray), λ = 12.40 pm",
+      "Scattered photon: 83.63 keV, λ = 14.82 pm",
+      "Recoil electron: 16.37 keV, 0.247c"
+    ]
   },
   "particles": [
-    { "type": "electron", "position": { "x": 0, "y": 0, "z": 0 } }
+    {
+      "id": "e1",
+      "type": "electron",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    }
   ],
   "events": [
     {
       "time": 0,
       "action": "spawn",
-      "particle": { "id": "photon1", "type": "photon", "position": { "x": -80000, "y": 0, "z": 0 }, "direction": { "x": 1, "y": 0, "z": 0 }, "energy": 100 }
+      "particle": {
+        "id": "photon1",
+        "type": "photon",
+        "position": {
+          "x": -600000,
+          "y": 0,
+          "z": 0
+        },
+        "direction": {
+          "x": 1,
+          "y": 0,
+          "z": 0
+        },
+        "energy": 100000
+      }
     },
     {
-      "time": 1600,
+      "time": 120,
       "action": "remove",
       "targetId": "photon1"
     },
     {
-      "time": 1600,
+      "time": 120,
       "action": "spawn",
-      "particle": { "id": "photon2", "type": "photon", "position": { "x": 0, "y": 0, "z": 0 }, "direction": { "x": 0.7, "y": 0.7, "z": 0 }, "energy": 80 }
+      "particle": {
+        "id": "photon2",
+        "type": "photon",
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "direction": {
+          "x": 0,
+          "y": 1,
+          "z": 0
+        },
+        "energy": 83633.4
+      }
+    },
+    {
+      "time": 120,
+      "action": "remove",
+      "targetId": "e1"
+    },
+    {
+      "time": 120,
+      "action": "spawn",
+      "particle": {
+        "id": "e2",
+        "type": "electron",
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "direction": {
+          "x": 0.76709,
+          "y": -0.64154,
+          "z": 0
+        },
+        "speed": 0.2472,
+        "energy": 16366.6
+      }
     }
-  ]
+  ],
+  "simplifications": [
+    "The electron is treated as free and at rest. A real atomic electron is bound, but its binding energy (13.6 eV in hydrogen) is negligible next to the 16.4 keV it receives."
+  ],
+  "extent": 450000
 }

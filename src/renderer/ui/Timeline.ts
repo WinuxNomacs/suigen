@@ -1,4 +1,5 @@
 import { SimulationEngine } from '../physics/SimulationEngine';
+import { formatDuration } from '../physics/time';
 
 export class Timeline {
   private engine: SimulationEngine;
@@ -31,6 +32,12 @@ export class Timeline {
   }
 
   update(): void {
-    this.timeDisplay.textContent = `t = ${this.engine.state.time.toFixed(1)} fs`;
+    const rt = this.engine.getRealTime();
+    let text = `t ${rt.approximate ? '\u2248' : '='} ${formatDuration(rt.fs)}`;
+    if (rt.activeLabel) text += ` (fast-forward: ${rt.activeLabel})`;
+    this.timeDisplay.textContent = text;
+    this.timeDisplay.title = rt.approximate
+      ? 'Real elapsed time. Approximate: includes a span that is fast-forwarded.'
+      : 'Real elapsed time.';
   }
 }

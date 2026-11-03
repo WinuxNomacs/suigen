@@ -6,12 +6,13 @@ import { Toolbar } from './ui/Toolbar';
 import { Timeline } from './ui/Timeline';
 import { InfoPanel } from './ui/InfoPanel';
 import { ParticleData, ParticleType, Vec3 } from '../shared/types';
-import { FS_PER_REAL_SECOND } from '../shared/constants';
+import { TICKS_PER_REAL_SECOND } from '../shared/constants';
 
 const viewport = document.getElementById('viewport')!;
 const sceneManager = new SceneManager(viewport);
 const particleManager = new ParticleManager(sceneManager.scene);
 const engine = new SimulationEngine(particleManager);
+engine.setOnLoad(() => sceneManager.frame(engine.getExtent()));
 
 const toolbar = new Toolbar();
 const timeline = new Timeline(engine);
@@ -119,7 +120,7 @@ function animate(): void {
   lastTime = now;
 
   if (engine.state.playing) {
-    engine.tick(deltaSec * FS_PER_REAL_SECOND);
+    engine.tick(deltaSec * TICKS_PER_REAL_SECOND);
   }
 
   particleManager.update(engine.state.time);

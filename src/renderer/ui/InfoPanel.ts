@@ -1,8 +1,26 @@
 import { ParticleData, Scenario } from '../../shared/types';
 import { getPresets, loadPreset } from '../scenarios/ScenarioLoader';
 import { SimulationEngine } from '../physics/SimulationEngine';
+import { formatEnergy } from '../particles/ParticleLabels';
 
 type PanelMode = 'gallery' | 'description' | 'particle';
+
+// Shown with every scenario and in the sandbox. Numbers are computed; see upcoming-changes.md, Phase 1.
+const GENERAL_SIMPLIFICATIONS = [
+  'No forces are simulated. Particles stay where they are placed; only photons and scripted particles move, in straight lines at constant speed.',
+  'Energy levels use the hydrogen formula E = -13.6 eV / n\u00b2, which ignores fine structure and other small corrections (1 to 6 \u00d7 10\u207b\u2075 eV at n = 2).',
+  'Only s and p clouds up to n = 4 are drawn. The outer surface holds 90% of the probability and the inner shell marks the most likely distance. The inner rings of the 2s, 3s, 3p, 4s and 4p clouds (radial nodes) are not drawn.',
+  'An electron absorbs a photon within \u00b10.05 eV of a transition energy. Real absorption is about 100,000 times more selective: the 2p level\u2019s natural width is about 0.4 \u00b5eV.',
+  'The change between clouds is drawn as a short crossfade; how long a transition really takes is not modeled.',
+  'Photon wave trails are drawn in proportion to the real wavelength only between about 4 pm and 31 pm (X-rays). Ultraviolet and visible light have wavelengths hundreds to thousands of times larger than the atom and are drawn shorter; gamma rays are drawn longer.',
+  'Particle balls are markers, not sizes: electrons have no known size, and a proton\u2019s radius is about 0.84 fm.',
+  'Times are real elapsed time. \u201c\u2248\u201d means the time includes a fast-forwarded span, labeled \u201cfast-forward\u201d while it plays.',
+];
+
+function simplificationsHtml(extra: string[] = []): string {
+  const items = [...GENERAL_SIMPLIFICATIONS, ...extra].map(s => `<li>${s}</li>`).join('');
+  return `<details class="simplifications"><summary>Simplifications</summary><ul>${items}</ul></details>`;
+}
 
 export class InfoPanel {
   private container: HTMLElement;
@@ -49,7 +67,7 @@ export class InfoPanel {
         }
         const scenario = loadPreset(key);
         if (scenario) {
-          this.engine.loadScenario(scenario.particles, scenario.events);
+          this.engine.loadScenario(scenario.particles, scenario.events, scenario.compressions, scenario.extent);
           this.renderDescription(scenario);
         }
       });
@@ -67,7 +85,8 @@ export class InfoPanel {
         <h3>Sandbox Mode</h3>
         <p class="hint">Select a particle type from the toolbar, then click in the viewport to place it.</p>
         <p class="hint">Electrons settle around the nearest proton. Photons fly toward the nearest electron with the energy chosen under the &gamma; button.</p>
-        <p class="hint">An electron absorbs a photon only if its energy exactly matches a jump to a higher orbital (10.2 eV takes 1s to 2p). Otherwise the photon passes straight through.</p>
+        <p class="hint">An electron absorbs a photon only if its energy matches a jump to a higher orbital (10.2 eV takes 1s to 2p). Otherwise the photon passes straight through.</p>
+        ${simplificationsHtml()}
       `;
       this.container.querySelector('#back-to-gallery')!.addEventListener('click', () => this.renderGallery());
       return;
@@ -114,6 +133,7 @@ export class InfoPanel {
           <ul>${scenario.scientific.constants.map(c => `<li>${c}</li>`).join('')}</ul>
         </div>
       </div>
+      ${simplificationsHtml(scenario.simplifications)}
     `;
 
     this.container.querySelector('#back-to-gallery')!.addEventListener('click', () => this.renderGallery());
@@ -138,7 +158,8 @@ export class InfoPanel {
       <p>z: ${p.position.z.toFixed(1)} fm</p>
       <p>spin: ${p.spin}</p>
       ${orbitalStr ? `<p>orbital: ${orbitalStr}</p>` : ''}
-      ${p.energy ? `<p>energy: ${p.energy} eV</p>` : ''}
+      ${p.energy ? `<p>energy: ${formatEnergy(p.energy)}</p>` : ''}
+      ${p.speed !== undefined ? `<p>speed: ${p.speed} c</p>` : ''}
     `;
     this.container.querySelector('#back-to-desc')!.addEventListener('click', () => {
       if (this.currentScenario) {

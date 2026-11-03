@@ -1,4 +1,19 @@
 import * as THREE from 'three';
+import {
+  HC_EV_PM,
+  TRAIL_REF_WAVELENGTH_PM,
+  TRAIL_REF_DRAWN_FM,
+  TRAIL_MIN_DRAWN_FM,
+  TRAIL_MAX_DRAWN_FM,
+} from '../../shared/constants';
+
+// Drawn wavelength is proportional to the real one (λ = hc / E) within the clamp range, so the ratio
+// between two X-ray photons (e.g. before and after Compton scattering) is shown to scale.
+export function drawnWavelength(energyEv: number | undefined): number {
+  if (!energyEv) return TRAIL_REF_DRAWN_FM;
+  const drawn = TRAIL_REF_DRAWN_FM * (HC_EV_PM / energyEv) / TRAIL_REF_WAVELENGTH_PM;
+  return THREE.MathUtils.clamp(drawn, TRAIL_MIN_DRAWN_FM, TRAIL_MAX_DRAWN_FM);
+}
 
 export class PhotonTrail {
   private line: THREE.Line;
@@ -17,12 +32,12 @@ export class PhotonTrail {
     scene.add(this.line);
   }
 
-  update(position: THREE.Vector3, direction: THREE.Vector3, time: number): void {
+  update(position: THREE.Vector3, direction: THREE.Vector3, time: number, energyEv?: number): void {
     this.points = [];
-    const wavelength = 2000;
-    const amplitude = 800;
-    const trailLength = 20000;
-    const segments = 100;
+    const wavelength = drawnWavelength(energyEv);
+    const amplitude = 25000;
+    const trailLength = 400000;
+    const segments = 200;
 
     const up = new THREE.Vector3(0, 1, 0);
     const perp = new THREE.Vector3().crossVectors(direction, up).normalize();
