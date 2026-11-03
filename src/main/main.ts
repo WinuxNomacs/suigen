@@ -14,7 +14,7 @@ const createWindow = () => {
     height: 800,
     title: 'Suigen',
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.cjs'),
     },
   });
 
@@ -27,8 +27,10 @@ const createWindow = () => {
     );
   }
 
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  // Open the DevTools only when running from the dev server.
+  if (MAIN_WINDOW_VITE_DEV_SERVER_URL && !process.env.SUIGEN_NO_DEVTOOLS) {
+    mainWindow.webContents.openDevTools();
+  }
 };
 
 // This method will be called when Electron has finished

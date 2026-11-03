@@ -4,6 +4,47 @@
 Electron-based desktop application for real-time 3D visualization of quantum particle interactions within atomic-scale fermion fields. Scientifically accurate simulation with intuitive UI for educational and research purposes.
 
 The name "suigen" and resulting common nickname "sui" are based on the latin term "Sui Generis" - Of its own kind; constituting a class alone.
+
+---
+
+## Getting Started
+
+**Prerequisites:** [Git](https://git-scm.com) and [Node.js](https://nodejs.org) 22.13 or newer.
+
+| OS | Install Node |
+|---|---|
+| Windows | `winget install OpenJS.NodeJS.LTS`, then open a new terminal |
+| macOS | `brew install node` |
+| Linux | your package manager, or [fnm](https://github.com/Schniz/fnm) |
+
+Then clone and run. The first run installs dependencies and downloads Electron (~150 MB); later runs start straight away.
+
+```bash
+git clone <repo-url> suigen
+cd suigen
+./run.sh        # macOS / Linux
+.\run.cmd       # Windows (or double-click run.cmd)
+```
+
+| Option | Effect |
+|---|---|
+| `--setup-only` | Install everything, don't launch |
+| `--web` | Open in your browser instead of the desktop app |
+| `--dev` | Open DevTools alongside the app |
+
+**Developing on Windows with WSL:** run the app from the environment you installed in. `node_modules` contains a platform-specific Electron binary, so don't share one folder between WSL and Windows. Native Windows is faster than WSLg for 3D.
+
+### npm scripts
+
+| Script | Purpose |
+|---|---|
+| `npm start` | Launch the desktop app with hot reload |
+| `npm run web` | Serve the app for a browser |
+| `npm run typecheck` | Type-check with `tsc` |
+| `npm run lint` | Lint with ESLint |
+| `npm run package` | Build a runnable app in `out/` for the current OS |
+| `npm run make` | Build installers (Windows: Squirrel; macOS: zip; Linux: deb/rpm, built on Linux) |
+
 ---
 
 ## Functional Requirements

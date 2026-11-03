@@ -23,19 +23,19 @@
   },
   "particles": [
     { "type": "proton", "position": { "x": 0, "y": 0, "z": 0 } },
-    { "type": "electron", "position": { "x": 0, "y": 0, "z": 0 }, "orbital": { "n": 1, "l": 0, "m": 0 } }
+    { "id": "e1", "type": "electron", "position": { "x": 0, "y": 0, "z": 0 }, "orbital": { "n": 1, "l": 0, "m": 0 } }
   ],
   "events": [
     {
       "time": 0,
       "action": "spawn",
-      "particle": { "type": "photon", "position": { "x": -80000, "y": 0, "z": 0 }, "direction": { "x": 1, "y": 0, "z": 0 }, "energy": 10.2 }
+      "particle": { "id": "photon1", "type": "photon", "position": { "x": -80000, "y": 0, "z": 0 }, "direction": { "x": 1, "y": 0, "z": 0 }, "energy": 10.2 }
     },
     {
       "time": 1600,
       "action": "absorb",
-      "photonIndex": 2,
-      "electronIndex": 1,
+      "photonId": "photon1",
+      "electronId": "e1",
       "targetOrbital": { "n": 2, "l": 1, "m": 0 }
     }
   ]

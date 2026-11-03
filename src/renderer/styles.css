@@ -42,6 +42,17 @@ body {
 .particle-btn:hover { background: #2a2a4e; }
 .particle-btn.active { border-color: #66aaff; background: #1a2a4e; }
 
+#photon-energy {
+  width: 44px;
+  padding: 2px 0;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #1a1a2e;
+  color: #ffdd44;
+  font-size: 10px;
+  cursor: pointer;
+}
+
 /* Viewport */
 #viewport {
   grid-row: 1;

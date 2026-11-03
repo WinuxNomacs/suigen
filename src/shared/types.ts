@@ -27,8 +27,9 @@ export interface ScenarioEvent {
   time: number;
   action: 'spawn' | 'absorb' | 'emit' | 'remove';
   particle?: Partial<ParticleData> & { type: ParticleType };
-  photonIndex?: number;
-  electronIndex?: number;
+  photonId?: string;
+  electronId?: string;
+  targetId?: string;
   targetOrbital?: OrbitalState;
 }
 
@@ -67,5 +68,4 @@ export interface SimulationState {
   playing: boolean;
   time: number;
   speed: number;
-  particles: ParticleData[];
 }

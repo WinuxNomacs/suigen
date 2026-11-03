@@ -5,6 +5,8 @@ import { SimulationEngine } from './physics/SimulationEngine';
 import { Toolbar } from './ui/Toolbar';
 import { Timeline } from './ui/Timeline';
 import { InfoPanel } from './ui/InfoPanel';
+import { ParticleData, ParticleType, Vec3 } from '../shared/types';
+import { FS_PER_REAL_SECOND } from '../shared/constants';
 
 const viewport = document.getElementById('viewport')!;
 const sceneManager = new SceneManager(viewport);
@@ -26,6 +28,38 @@ legend.innerHTML = `
 `;
 viewport.appendChild(legend);
 
+function nearest(type: ParticleType, pos: Vec3): ParticleData | undefined {
+  let best: ParticleData | undefined;
+  let bestDist = Infinity;
+  for (const p of particleManager.getAllParticles()) {
+    if (p.type !== type) continue;
+    const d = Math.hypot(p.position.x - pos.x, p.position.y - pos.y, p.position.z - pos.z);
+    if (d < bestDist) {
+      best = p;
+      bestDist = d;
+    }
+  }
+  return best;
+}
+
+// Sandbox defaults: electrons settle into 1s around a proton, photons aim at the atom.
+function placementDefaults(type: ParticleType, pos: Vec3): { position: Vec3; extra: Partial<ParticleData> } {
+  if (type === 'electron') {
+    const proton = nearest('proton', pos);
+    return {
+      position: proton ? { ...proton.position } : pos,
+      extra: { orbital: { n: 1, l: 0, m: 0 } },
+    };
+  }
+  if (type === 'photon') {
+    const target = nearest('electron', pos)?.position ?? nearest('proton', pos)?.position ?? { x: 0, y: 0, z: 0 };
+    let direction = { x: target.x - pos.x, y: target.y - pos.y, z: target.z - pos.z };
+    if (Math.hypot(direction.x, direction.y, direction.z) < 1e-6) direction = { x: 1, y: 0, z: 0 };
+    return { position: pos, extra: { direction, energy: toolbar.getPhotonEnergy() } };
+  }
+  return { position: pos, extra: {} };
+}
+
 // Raycaster
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
@@ -44,12 +78,12 @@ viewport.addEventListener('click', (event) => {
     const intersection = new THREE.Vector3();
     raycaster.ray.intersectPlane(plane, intersection);
     if (intersection) {
-      const data = particleManager.addParticle(selectedType, {
+      const { position, extra } = placementDefaults(selectedType, {
         x: intersection.x,
         y: intersection.y,
         z: intersection.z,
       });
-      engine.state.particles.push(data);
+      engine.addUserParticle(selectedType, position, extra);
       toolbar.clearSelection();
     }
   } else {
@@ -85,10 +119,10 @@ function animate(): void {
   lastTime = now;
 
   if (engine.state.playing) {
-    engine.tick(deltaSec * 100);
+    engine.tick(deltaSec * FS_PER_REAL_SECOND);
   }
 
-  particleManager.updateTrails(engine.state.time);
+  particleManager.update(engine.state.time);
   timeline.update();
   sceneManager.render();
 }

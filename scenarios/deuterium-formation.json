@@ -22,13 +22,13 @@
   },
   "particles": [
     { "type": "proton", "position": { "x": 0, "y": 0, "z": 0 } },
-    { "type": "neutron", "position": { "x": 80000, "y": 0, "z": 0 }, "direction": { "x": -1, "y": 0, "z": 0 } }
+    { "id": "n1", "type": "neutron", "position": { "x": 80000, "y": 0, "z": 0 }, "direction": { "x": -1, "y": 0, "z": 0 } }
   ],
   "events": [
     {
       "time": 1600,
       "action": "remove",
-      "photonIndex": 1
+      "targetId": "n1"
     },
     {
       "time": 1600,

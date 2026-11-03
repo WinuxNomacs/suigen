@@ -27,17 +27,17 @@
     {
       "time": 0,
       "action": "spawn",
-      "particle": { "type": "photon", "position": { "x": -80000, "y": 0, "z": 0 }, "direction": { "x": 1, "y": 0, "z": 0 }, "energy": 100 }
+      "particle": { "id": "photon1", "type": "photon", "position": { "x": -80000, "y": 0, "z": 0 }, "direction": { "x": 1, "y": 0, "z": 0 }, "energy": 100 }
     },
     {
       "time": 1600,
       "action": "remove",
-      "photonIndex": 1
+      "targetId": "photon1"
     },
     {
       "time": 1600,
       "action": "spawn",
-      "particle": { "type": "photon", "position": { "x": 0, "y": 0, "z": 0 }, "direction": { "x": 0.7, "y": 0.7, "z": 0 }, "energy": 80 }
+      "particle": { "id": "photon2", "type": "photon", "position": { "x": 0, "y": 0, "z": 0 }, "direction": { "x": 0.7, "y": 0.7, "z": 0 }, "energy": 80 }
     }
   ]
 }

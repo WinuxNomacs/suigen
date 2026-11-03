@@ -31,6 +31,10 @@ export class Toolbar {
     return this.selectedType;
   }
 
+  getPhotonEnergy(): number {
+    return parseFloat((document.getElementById('photon-energy') as HTMLSelectElement).value);
+  }
+
   clearSelection(): void {
     this.selectedType = null;
     this.buttons.forEach(b => b.classList.remove('active'));

@@ -2,11 +2,15 @@ import * as THREE from 'three';
 import { OrbitalState } from '../../shared/types';
 import { BOHR_RADIUS_FM } from '../../shared/constants';
 
+export function orbitalRadius(orbital: OrbitalState): number {
+  return orbital.n * orbital.n * BOHR_RADIUS_FM * 0.4;
+}
+
 export function createOrbitalMesh(orbital: OrbitalState): THREE.Object3D {
-  const { n, l, m } = orbital;
+  const { l, m } = orbital;
   const group = new THREE.Group();
 
-  const scale = n * n * BOHR_RADIUS_FM * 0.4;
+  const scale = orbitalRadius(orbital);
 
   if (l === 0) {
     const geo = new THREE.SphereGeometry(scale, 32, 32);
@@ -54,5 +58,30 @@ export function createOrbitalMesh(orbital: OrbitalState): THREE.Object3D {
     }
   }
 
+  group.traverse(obj => {
+    if (obj instanceof THREE.Mesh) {
+      const mat = obj.material as THREE.MeshBasicMaterial;
+      mat.userData.baseOpacity = mat.opacity;
+    }
+  });
+
   return group;
+}
+
+export function setOrbitalOpacity(group: THREE.Object3D, factor: number): void {
+  group.traverse(obj => {
+    if (obj instanceof THREE.Mesh) {
+      const mat = obj.material as THREE.MeshBasicMaterial;
+      mat.opacity = mat.userData.baseOpacity * factor;
+    }
+  });
+}
+
+export function disposeOrbitalMesh(group: THREE.Object3D): void {
+  group.traverse(obj => {
+    if (obj instanceof THREE.Mesh) {
+      obj.geometry.dispose();
+      (obj.material as THREE.Material).dispose();
+    }
+  });
 }

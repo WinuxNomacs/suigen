@@ -66,6 +66,8 @@ export class InfoPanel {
         <button class="back-btn" id="back-to-gallery">\u2190 Scenarios</button>
         <h3>Sandbox Mode</h3>
         <p class="hint">Select a particle type from the toolbar, then click in the viewport to place it.</p>
+        <p class="hint">Electrons settle around the nearest proton. Photons fly toward the nearest electron with the energy chosen under the &gamma; button.</p>
+        <p class="hint">An electron absorbs a photon only if its energy exactly matches a jump to a higher orbital (10.2 eV takes 1s to 2p). Otherwise the photon passes straight through.</p>
       `;
       this.container.querySelector('#back-to-gallery')!.addEventListener('click', () => this.renderGallery());
       return;
