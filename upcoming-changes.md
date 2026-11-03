@@ -91,20 +91,20 @@ The app aims to be scientifically accurate (README, "Accuracy & Validation"). Th
 
 ## Phase 3: Validation and tests
 
-- [ ] **3.1 Add a test runner**
+- [x] **3.1 Add a test runner**
   - Vitest fits the existing Vite setup. Add an `npm test` script and run a trivial test first to confirm the setup works.
 
-- [ ] **3.2 Unit tests for the physics**
+- [x] **3.2 Unit tests for the physics**
   - `transitions.ts`: each toolbar photon energy (10.2, 12.09, 12.75, 1.89 eV) produces the expected jump; 5.0 eV produces none; the allowed shape changes are respected.
   - `SimulationEngine`: rewinding and replaying gives the same scene; sandbox placements survive rewinding; an absorption event is only recorded once.
 
-- [ ] **3.3 Check scenario files against the expected format**
+- [x] **3.3 Check scenario files against the expected format**
   - Problem: [ScenarioLoader.ts](src/renderer/scenarios/ScenarioLoader.ts) loads the JSON with `as unknown as Scenario`, so a malformed file isn't caught.
   - Fix: a checker that runs when scenarios load, plus a test that runs it on every file in [scenarios/](scenarios/). Also check the physics: photon energies against the energy formula, and that referenced particle ids exist.
   - **Decision (2026-11-03): use zod 4** (checked 2026-11-03: v4.6.7, MIT, no runtime dependencies). Measure the bundle size before and after adding it, and write the result down here.
   - Export a JSON Schema from the zod schema and point `.vscode/settings.json` `json.schemas` at it for `scenarios/*.json`, so VS Code autocompletes and flags errors while editing scenarios.
 
-- [ ] **3.4 Stop inserting scenario text as raw HTML (SEC-05)** ([InfoPanel.ts](src/renderer/ui/InfoPanel.ts))
+- [x] **3.4 Stop inserting scenario text as raw HTML (SEC-05)** ([InfoPanel.ts](src/renderer/ui/InfoPanel.ts))
   - Problem: scenario text is inserted with `innerHTML`. This is safe while scenarios ship with the app, but becomes a script-injection risk once users can load their own files (planned in the README).
   - Fix: build the panel with `textContent` / `createElement`, or escape every value inserted. Must land before user-loaded scenarios are added.
 
@@ -132,3 +132,9 @@ _Move finished items here with their commit hash._
   - Markers are screen-space sprites (constant pixel size); the femtometer-scale spheres remain for close zoom. A bound electron has no marker: clicking its cloud selects it, and markers take priority over clouds.
   - Departure rule: a moving particle heading away from the origin beyond 2x the scenario extent is removed.
   - Also fixed: photon trails were drawn at full length even behind the point where the photon was created (visible after Compton scattering).
+- **Phase 3 (3.1-3.4)**: `bf9f8da`. `npm test`: 37 tests pass. Electron interaction checks (12/12) rerun after the info panel rewrite.
+  - Vitest 4.1.12, not 5.x: vitest 5 supports Node `^22.12 || ^24 || >=26`, which excludes the Node 25.6.1 on this machine. Revisit when Node is upgraded to 26.
+  - zod 4.6.7 bundle cost (web build, 2026-11-03): 576.31 kB -> 667.18 kB (+90.9 kB; gzip 149.04 -> 175.46 kB, +26.4 kB). Kept: negligible for a desktop app loaded from disk. `zod/mini` is the option if size ever matters.
+  - JSON Schema at [src/shared/scenario.schema.json](src/shared/scenario.schema.json), checked by a test; regenerate with `npm test -- -u`. VS Code maps it to `scenarios/*.json` in `.vscode/settings.json`.
+  - Bug found by the new engine tests and fixed: absorption was checked only at sampled frame times, so seeking or stepping past a cloud (or a long frame at high speed) let a matching photon pass through. The crossing time is now solved exactly.
+  - Lint rule (`no-restricted-syntax`) rejects `innerHTML`/`outerHTML` assignment.
