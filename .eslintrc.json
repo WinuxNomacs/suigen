@@ -17,5 +17,14 @@
     "import/resolver": {
       "typescript": true
     }
+  },
+  "rules": {
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "AssignmentExpression > MemberExpression[property.name=/^(innerHTML|outerHTML)$/]",
+        "message": "Build DOM nodes and set textContent instead (plan item 3.4): HTML strings are an injection risk."
+      }
+    ]
   }
 }

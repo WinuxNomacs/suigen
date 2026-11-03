@@ -12,6 +12,8 @@
     "publish": "electron-forge publish",
     "lint": "eslint --ext .ts,.tsx .",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "web": "vite --config vite.renderer.config.mts",
     "web:build": "vite build --config vite.renderer.config.mts --outDir ../../out/web --emptyOutDir"
   },
@@ -44,11 +46,13 @@
     "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-import": "^2.32.0",
     "typescript": "~5.9.0",
-    "vite": "^8.3.5"
+    "vite": "^8.3.5",
+    "vitest": "^4.1.12"
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.1",
-    "three": "^0.182.0"
+    "three": "^0.182.0",
+    "zod": "^4.6.7"
   },
   "allowScripts": {
     "electron-winstaller": true

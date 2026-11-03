@@ -1,0 +1,695 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "layman": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sections": {
+          "type": "object",
+          "properties": {
+            "whatsHappening": {
+              "type": "string",
+              "minLength": 1
+            },
+            "whyItMatters": {
+              "type": "string",
+              "minLength": 1
+            },
+            "whatToWatch": {
+              "type": "string",
+              "minLength": 1
+            },
+            "funFact": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "whatsHappening",
+            "whyItMatters",
+            "whatToWatch",
+            "funFact"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "title",
+        "summary",
+        "sections"
+      ],
+      "additionalProperties": false
+    },
+    "scientific": {
+      "type": "object",
+      "properties": {
+        "narrative": {
+          "type": "string",
+          "minLength": 1
+        },
+        "equations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "tex": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "label",
+              "tex"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "constants": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "narrative",
+        "equations",
+        "constants"
+      ],
+      "additionalProperties": false
+    },
+    "particles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "electron",
+              "proton",
+              "neutron",
+              "photon"
+            ]
+          },
+          "position": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "z": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "z"
+            ],
+            "additionalProperties": false
+          },
+          "momentum": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "z": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "z"
+            ],
+            "additionalProperties": false
+          },
+          "spin": {
+            "type": "number"
+          },
+          "orbital": {
+            "type": "object",
+            "properties": {
+              "n": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991
+              },
+              "l": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "m": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "n",
+              "l",
+              "m"
+            ],
+            "additionalProperties": false
+          },
+          "direction": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "z": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "z"
+            ],
+            "additionalProperties": false
+          },
+          "speed": {
+            "description": "Speed as a fraction of the speed of light",
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1
+          },
+          "energy": {
+            "description": "Photon energy or kinetic energy, in eV",
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "effectiveCharge": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "time": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Animation ticks (see physics/time.ts)"
+              },
+              "action": {
+                "type": "string",
+                "const": "spawn"
+              },
+              "particle": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "electron",
+                      "proton",
+                      "neutron",
+                      "photon"
+                    ]
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      },
+                      "z": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y",
+                      "z"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "momentum": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      },
+                      "z": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y",
+                      "z"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "spin": {
+                    "type": "number"
+                  },
+                  "orbital": {
+                    "type": "object",
+                    "properties": {
+                      "n": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "l": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "m": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "n",
+                      "l",
+                      "m"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "direction": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      },
+                      "z": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y",
+                      "z"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "speed": {
+                    "description": "Speed as a fraction of the speed of light",
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1
+                  },
+                  "energy": {
+                    "description": "Photon energy or kinetic energy, in eV",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "effectiveCharge": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "time",
+              "action",
+              "particle"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "time": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Animation ticks (see physics/time.ts)"
+              },
+              "action": {
+                "type": "string",
+                "const": "absorb"
+              },
+              "photonId": {
+                "type": "string"
+              },
+              "electronId": {
+                "type": "string"
+              },
+              "targetOrbital": {
+                "type": "object",
+                "properties": {
+                  "n": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  "l": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "m": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "n",
+                  "l",
+                  "m"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "time",
+              "action",
+              "photonId",
+              "electronId",
+              "targetOrbital"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "time": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Animation ticks (see physics/time.ts)"
+              },
+              "action": {
+                "type": "string",
+                "const": "emit"
+              },
+              "electronId": {
+                "type": "string"
+              },
+              "targetOrbital": {
+                "type": "object",
+                "properties": {
+                  "n": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  "l": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "m": {
+                    "type": "integer",
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "n",
+                  "l",
+                  "m"
+                ],
+                "additionalProperties": false
+              },
+              "particle": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "electron",
+                      "proton",
+                      "neutron",
+                      "photon"
+                    ]
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      },
+                      "z": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y",
+                      "z"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "momentum": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      },
+                      "z": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y",
+                      "z"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "spin": {
+                    "type": "number"
+                  },
+                  "orbital": {
+                    "type": "object",
+                    "properties": {
+                      "n": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "l": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "m": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "n",
+                      "l",
+                      "m"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "direction": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      },
+                      "z": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y",
+                      "z"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "speed": {
+                    "description": "Speed as a fraction of the speed of light",
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1
+                  },
+                  "energy": {
+                    "description": "Photon energy or kinetic energy, in eV",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "effectiveCharge": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "time",
+              "action",
+              "electronId",
+              "targetOrbital",
+              "particle"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "time": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Animation ticks (see physics/time.ts)"
+              },
+              "action": {
+                "type": "string",
+                "const": "remove"
+              },
+              "targetId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "time",
+              "action",
+              "targetId"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "compressions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Animation ticks (see physics/time.ts)"
+          },
+          "end": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Animation ticks (see physics/time.ts)"
+          },
+          "realFs": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "Real duration in femtoseconds"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "realFs",
+          "label"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "simplifications": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "extent": {
+      "description": "Radius in fm the camera frames on load",
+      "type": "number",
+      "exclusiveMinimum": 0
+    }
+  },
+  "required": [
+    "name",
+    "description",
+    "layman",
+    "scientific",
+    "particles",
+    "events"
+  ],
+  "additionalProperties": false
+}

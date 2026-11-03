@@ -17,9 +17,27 @@ const GENERAL_SIMPLIFICATIONS = [
   'Times are real elapsed time. \u201c\u2248\u201d means the time includes a fast-forwarded span, labeled \u201cfast-forward\u201d while it plays.',
 ];
 
-function simplificationsHtml(extra: string[] = []): string {
-  const items = [...GENERAL_SIMPLIFICATIONS, ...extra].map(s => `<li>${s}</li>`).join('');
-  return `<details class="simplifications"><summary>Simplifications</summary><ul>${items}</ul></details>`;
+type Child = Node | string | null | undefined | false;
+
+/** Builds an element. Text is always set as text, never parsed as HTML. */
+function h(tag: string, attrs: Record<string, string> = {}, ...children: Child[]): HTMLElement {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') el.className = v;
+    else if (k.startsWith('data-')) el.dataset[k.slice(5)] = v;
+    else el.setAttribute(k, v);
+  }
+  for (const c of children) {
+    if (c) el.append(c);
+  }
+  return el;
+}
+
+function simplifications(extra: string[] = []): HTMLElement {
+  return h('details', { class: 'simplifications' },
+    h('summary', {}, 'Simplifications'),
+    h('ul', {}, ...[...GENERAL_SIMPLIFICATIONS, ...extra].map(t => h('li', {}, t))),
+  );
 }
 
 export class InfoPanel {
@@ -27,7 +45,6 @@ export class InfoPanel {
   private engine: SimulationEngine;
   private mode: PanelMode = 'gallery';
   private currentScenario: Scenario | null = null;
-  private showScience = false;
 
   constructor(container: HTMLElement, engine: SimulationEngine) {
     this.container = container;
@@ -35,148 +52,137 @@ export class InfoPanel {
     this.renderGallery();
   }
 
+  private show(...children: Child[]): void {
+    this.container.replaceChildren(...children.filter((c): c is Node | string => !!c));
+  }
+
+  private card(key: string, name: string, title: string, summary: string, extraClass = ''): HTMLElement {
+    const card = h('div', { class: `scenario-card ${extraClass}`.trim(), 'data-scenario': key },
+      h('div', { class: 'card-name' }, name),
+      h('div', { class: 'card-title' }, title),
+      h('div', { class: 'card-summary' }, summary),
+    );
+    card.addEventListener('click', () => {
+      if (key === 'sandbox') {
+        this.engine.loadScenario([], []);
+        this.renderDescription(null);
+        return;
+      }
+      const scenario = loadPreset(key);
+      if (scenario) {
+        this.engine.loadScenario(scenario.particles, scenario.events, scenario.compressions, scenario.extent);
+        this.renderDescription(scenario);
+      }
+    });
+    return card;
+  }
+
+  private backButton(id: string, text: string, onClick: () => void): HTMLElement {
+    const btn = h('button', { class: 'back-btn', id }, text);
+    btn.addEventListener('click', onClick);
+    return btn;
+  }
+
   private renderGallery(): void {
     this.mode = 'gallery';
     this.currentScenario = null;
-    const presets = getPresets();
-    const cards = Object.entries(presets).map(([key, scenario]) => `
-      <div class="scenario-card" data-scenario="${key}">
-        <div class="card-name">${scenario.name}</div>
-        <div class="card-title">${scenario.layman.title}</div>
-        <div class="card-summary">${scenario.layman.summary}</div>
-      </div>
-    `).join('');
-
-    this.container.innerHTML = `
-      <h3>Explore</h3>
-      <div class="scenario-gallery">${cards}</div>
-      <div class="scenario-card sandbox-card" data-scenario="sandbox">
-        <div class="card-name">Sandbox</div>
-        <div class="card-title">Free Exploration</div>
-        <div class="card-summary">Place particles freely and watch them interact</div>
-      </div>
-    `;
-
-    this.container.querySelectorAll('.scenario-card').forEach(card => {
-      card.addEventListener('click', () => {
-        const key = (card as HTMLElement).dataset.scenario!;
-        if (key === 'sandbox') {
-          this.engine.loadScenario([], []);
-          this.renderDescription(null);
-          return;
-        }
-        const scenario = loadPreset(key);
-        if (scenario) {
-          this.engine.loadScenario(scenario.particles, scenario.events, scenario.compressions, scenario.extent);
-          this.renderDescription(scenario);
-        }
-      });
-    });
+    const cards = Object.entries(getPresets()).map(([key, s]) => this.card(key, s.name, s.layman.title, s.layman.summary));
+    this.show(
+      h('h3', {}, 'Explore'),
+      h('div', { class: 'scenario-gallery' }, ...cards),
+      this.card('sandbox', 'Sandbox', 'Free Exploration', 'Place particles freely and watch them interact', 'sandbox-card'),
+    );
   }
 
   private renderDescription(scenario: Scenario | null): void {
     this.mode = 'description';
     this.currentScenario = scenario;
-    this.showScience = false;
+    const back = this.backButton('back-to-gallery', '\u2190 Scenarios', () => this.renderGallery());
 
     if (!scenario) {
-      this.container.innerHTML = `
-        <button class="back-btn" id="back-to-gallery">\u2190 Scenarios</button>
-        <h3>Sandbox Mode</h3>
-        <p class="hint">Select a particle type from the toolbar, then click in the viewport to place it.</p>
-        <p class="hint">Electrons settle around the nearest proton. Photons fly toward the nearest electron with the energy chosen under the &gamma; button.</p>
-        <p class="hint">An electron absorbs a photon only if its energy matches a jump to a higher orbital (10.2 eV takes 1s to 2p). Otherwise the photon passes straight through.</p>
-        ${simplificationsHtml()}
-      `;
-      this.container.querySelector('#back-to-gallery')!.addEventListener('click', () => this.renderGallery());
+      this.show(
+        back,
+        h('h3', {}, 'Sandbox Mode'),
+        h('p', { class: 'hint' }, 'Select a particle type from the toolbar, then click in the viewport to place it.'),
+        h('p', { class: 'hint' }, 'Electrons settle around the nearest proton. Photons fly toward the nearest electron with the energy chosen under the \u03b3 button.'),
+        h('p', { class: 'hint' }, 'An electron absorbs a photon only if its energy matches a jump to a higher orbital (10.2 eV takes 1s to 2p). Otherwise the photon passes straight through.'),
+        simplifications(),
+      );
       return;
     }
 
-    const s = scenario.layman.sections;
-    this.container.innerHTML = `
-      <button class="back-btn" id="back-to-gallery">\u2190 Scenarios</button>
-      <div class="desc-header">
-        <div class="desc-title">${scenario.layman.title}</div>
-        <div class="desc-summary">${scenario.layman.summary}</div>
-      </div>
-      <div class="desc-sections">
-        <details open>
-          <summary>What's happening</summary>
-          <p>${s.whatsHappening}</p>
-        </details>
-        <details>
-          <summary>Why it matters</summary>
-          <p>${s.whyItMatters}</p>
-        </details>
-        <details>
-          <summary>What to watch</summary>
-          <p>${s.whatToWatch}</p>
-        </details>
-        <details>
-          <summary>Fun fact</summary>
-          <p>${s.funFact}</p>
-        </details>
-      </div>
-      <button class="toggle-science" id="toggle-science">Show Science \u25BC</button>
-      <div class="science-content" id="science-content" style="display:none;">
-        <p class="sci-narrative">${scenario.scientific.narrative}</p>
-        <div class="sci-equations">
-          ${scenario.scientific.equations.map(eq => `
-            <div class="equation">
-              <span class="eq-label">${eq.label}:</span>
-              <span class="eq-tex">${eq.tex}</span>
-            </div>
-          `).join('')}
-        </div>
-        <div class="sci-constants">
-          <strong>Constants:</strong>
-          <ul>${scenario.scientific.constants.map(c => `<li>${c}</li>`).join('')}</ul>
-        </div>
-      </div>
-      ${simplificationsHtml(scenario.simplifications)}
-    `;
+    const sec = scenario.layman.sections;
+    const section = (title: string, text: string, open = false) => {
+      const d = h('details', {}, h('summary', {}, title), h('p', {}, text));
+      (d as HTMLDetailsElement).open = open;
+      return d;
+    };
 
-    this.container.querySelector('#back-to-gallery')!.addEventListener('click', () => this.renderGallery());
-    this.container.querySelector('#toggle-science')!.addEventListener('click', () => {
-      this.showScience = !this.showScience;
-      const content = document.getElementById('science-content')!;
-      const btn = document.getElementById('toggle-science')!;
-      content.style.display = this.showScience ? 'block' : 'none';
-      btn.textContent = this.showScience ? 'Hide Science \u25B2' : 'Show Science \u25BC';
+    const science = h('div', { class: 'science-content', id: 'science-content' },
+      h('p', { class: 'sci-narrative' }, scenario.scientific.narrative),
+      h('div', { class: 'sci-equations' }, ...scenario.scientific.equations.map(eq =>
+        h('div', { class: 'equation' },
+          h('span', { class: 'eq-label' }, `${eq.label}:`),
+          ' ',
+          h('span', { class: 'eq-tex' }, eq.tex),
+        ),
+      )),
+      h('div', { class: 'sci-constants' },
+        h('strong', {}, 'Constants:'),
+        h('ul', {}, ...scenario.scientific.constants.map(c => h('li', {}, c))),
+      ),
+    );
+    science.style.display = 'none';
+
+    const toggle = h('button', { class: 'toggle-science', id: 'toggle-science' }, 'Show Science \u25BC');
+    toggle.addEventListener('click', () => {
+      const showing = science.style.display !== 'none';
+      science.style.display = showing ? 'none' : 'block';
+      toggle.textContent = showing ? 'Show Science \u25BC' : 'Hide Science \u25B2';
     });
+
+    this.show(
+      back,
+      h('div', { class: 'desc-header' },
+        h('div', { class: 'desc-title' }, scenario.layman.title),
+        h('div', { class: 'desc-summary' }, scenario.layman.summary),
+      ),
+      h('div', { class: 'desc-sections' },
+        section("What's happening", sec.whatsHappening, true),
+        section('Why it matters', sec.whyItMatters),
+        section('What to watch', sec.whatToWatch),
+        section('Fun fact', sec.funFact),
+      ),
+      toggle,
+      science,
+      simplifications(scenario.simplifications),
+    );
   }
 
   showParticle(p: ParticleData): void {
     this.mode = 'particle';
-    const orbitalStr = p.orbital ? `n=${p.orbital.n}, l=${p.orbital.l}, m=${p.orbital.m}` : '';
-    this.container.innerHTML = `
-      <button class="back-btn" id="back-to-desc">\u2190 Description</button>
-      <h3>Particle</h3>
-      <p><strong>${p.type}</strong></p>
-      <p>x: ${p.position.x.toFixed(1)} fm</p>
-      <p>y: ${p.position.y.toFixed(1)} fm</p>
-      <p>z: ${p.position.z.toFixed(1)} fm</p>
-      <p>spin: ${p.spin}</p>
-      ${orbitalStr ? `<p>orbital: ${orbitalStr}</p>` : ''}
-      ${p.energy ? `<p>energy: ${formatEnergy(p.energy)}</p>` : ''}
-      ${p.speed !== undefined ? `<p>speed: ${p.speed} c</p>` : ''}
-    `;
-    this.container.querySelector('#back-to-desc')!.addEventListener('click', () => {
-      if (this.currentScenario) {
-        this.renderDescription(this.currentScenario);
-      } else {
-        this.renderGallery();
-      }
-    });
+    const line = (text: string) => h('p', {}, text);
+    this.show(
+      this.backButton('back-to-desc', '\u2190 Description', () => {
+        if (this.currentScenario) this.renderDescription(this.currentScenario);
+        else this.renderGallery();
+      }),
+      h('h3', {}, 'Particle'),
+      h('p', {}, h('strong', {}, p.type)),
+      line(`x: ${p.position.x.toFixed(1)} fm`),
+      line(`y: ${p.position.y.toFixed(1)} fm`),
+      line(`z: ${p.position.z.toFixed(1)} fm`),
+      line(`spin: ${p.spin}`),
+      p.orbital && line(`orbital: n=${p.orbital.n}, l=${p.orbital.l}, m=${p.orbital.m}`),
+      p.energy && line(`energy: ${formatEnergy(p.energy)}`),
+      p.speed !== undefined && line(`speed: ${p.speed} c`),
+    );
   }
 
   clearSelection(): void {
     if (this.mode === 'particle') {
-      if (this.currentScenario) {
-        this.renderDescription(this.currentScenario);
-      } else {
-        this.renderGallery();
-      }
+      if (this.currentScenario) this.renderDescription(this.currentScenario);
+      else this.renderGallery();
     }
   }
 }

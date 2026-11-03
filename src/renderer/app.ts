@@ -22,12 +22,15 @@ const infoPanel = new InfoPanel(document.getElementById('info-panel')!, engine);
 // Add color legend to viewport
 const legend = document.createElement('div');
 legend.id = 'legend';
-legend.innerHTML = `
-  <div class="legend-item"><span class="legend-dot" style="background:#ff4444"></span> proton</div>
-  <div class="legend-item"><span class="legend-dot" style="background:#4488ff"></span> electron</div>
-  <div class="legend-item"><span class="legend-dot" style="background:#888888"></span> neutron</div>
-  <div class="legend-item"><span class="legend-dot" style="background:#ffdd44"></span> photon</div>
-`;
+for (const [type, color] of [['proton', '#ff4444'], ['electron', '#4488ff'], ['neutron', '#888888'], ['photon', '#ffdd44']]) {
+  const item = document.createElement('div');
+  item.className = 'legend-item';
+  const dot = document.createElement('span');
+  dot.className = 'legend-dot';
+  dot.style.background = color;
+  item.append(dot, ` ${type}`);
+  legend.append(item);
+}
 viewport.appendChild(legend);
 
 function nearest(type: ParticleType, pos: Vec3): ParticleData | undefined {

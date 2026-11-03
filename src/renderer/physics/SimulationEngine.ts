@@ -1,4 +1,4 @@
-import { ScenarioEvent, SimulationState, ParticleData, ParticleType, TimeCompression, Vec3 } from '../../shared/types';
+import { OrbitalState, ScenarioEvent, SimulationState, ParticleData, ParticleType, TimeCompression, Vec3 } from '../../shared/types';
 import { DEFAULT_SCENE_EXTENT_FM, FS_PER_TICK, LIGHT_SPEED_FM_PER_TICK, STEP_TICKS } from '../../shared/constants';
 import { ParticleManager } from '../particles/ParticleManager';
 import { orbitalRadius } from '../particles/OrbitalMesh';
@@ -119,13 +119,37 @@ export class SimulationEngine {
     }
   }
 
+  // Events and photon-cloud crossings are handled in time order, so jumping straight to a later time
+  // (seeking, stepping, a long frame) gives the same result as playing through it.
   private advanceTo(time: number): void {
-    this.state.time = time;
-
-    while (this.nextEventIndex < this.events.length && this.events[this.nextEventIndex].time <= time) {
-      this.processEvent(this.events[this.nextEventIndex++]);
+    for (;;) {
+      const nextEventTime = this.events[this.nextEventIndex]?.time ?? Infinity;
+      const hit = this.nextAbsorption(this.state.time, Math.min(time, nextEventTime));
+      if (hit) {
+        this.moveTo(hit.time);
+        this.insertEvent({
+          time: hit.time,
+          action: 'absorb',
+          photonId: hit.photonId,
+          electronId: hit.electronId,
+          targetOrbital: hit.targetOrbital,
+        });
+        this.processEvent(this.events[this.nextEventIndex++]);
+        continue;
+      }
+      if (nextEventTime <= time) {
+        this.moveTo(nextEventTime);
+        this.processEvent(this.events[this.nextEventIndex++]);
+        continue;
+      }
+      break;
     }
+    this.moveTo(time);
+    this.removeDeparted();
+  }
 
+  private moveTo(time: number): void {
+    this.state.time = time;
     for (const [id, m] of this.motions) {
       const d = (time - m.spawnTime) * LIGHT_SPEED_FM_PER_TICK * m.speed;
       this.particleManager.updatePosition(id, {
@@ -134,9 +158,6 @@ export class SimulationEngine {
         z: m.origin.z + m.direction.z * d,
       });
     }
-
-    this.removeDeparted();
-    this.checkAbsorptions();
   }
 
   // A moving particle heading away from the origin beyond twice the framed extent has left the scene.
@@ -152,29 +173,50 @@ export class SimulationEngine {
   }
 
   // User-placed photons are absorbed when they enter an electron cloud with matching energy.
-  private checkAbsorptions(): void {
+  // Returns the earliest such crossing in [from, to], solved exactly from the straight-line motion.
+  private nextAbsorption(
+    from: number,
+    to: number,
+  ): { time: number; photonId: string; electronId: string; targetOrbital: OrbitalState } | null {
     const electrons = this.particleManager.getAllParticles().filter(p => p.type === 'electron' && p.orbital);
-    for (const id of this.motions.keys()) {
+    let best: { time: number; photonId: string; electronId: string; targetOrbital: OrbitalState } | null = null;
+
+    for (const [id, m] of this.motions) {
       if (!this.interactiveIds.has(id)) continue;
       const photon = this.particleManager.getParticle(id)?.data;
       if (!photon || photon.type !== 'photon' || photon.energy === undefined) continue;
       if (this.events.some(e => e.action === 'absorb' && e.photonId === id)) continue;
 
+      const fmPerTick = LIGHT_SPEED_FM_PER_TICK * m.speed;
+      const sNow = (from - m.spawnTime) * fmPerTick; // distance travelled at `from`
       for (const electron of electrons) {
-        if (distance(photon.position, electron.position) >= orbitalRadius(electron.orbital!, electron.effectiveCharge)) continue;
         const target = findTransition(electron.orbital!, photon.energy);
         if (!target) continue;
-        this.insertEvent({
-          time: this.state.time,
-          action: 'absorb',
-          photonId: id,
-          electronId: electron.id,
-          targetOrbital: target,
-        });
-        this.processEvent(this.events[this.nextEventIndex++]);
-        break;
+        const R = orbitalRadius(electron.orbital!, electron.effectiveCharge);
+        // |w + u·s| = R with w = origin - centre, u = unit direction: s² + 2(u·w)s + |w|² - R² = 0
+        const w = {
+          x: m.origin.x - electron.position.x,
+          y: m.origin.y - electron.position.y,
+          z: m.origin.z - electron.position.z,
+        };
+        const b = m.direction.x * w.x + m.direction.y * w.y + m.direction.z * w.z;
+        const c = w.x * w.x + w.y * w.y + w.z * w.z - R * R;
+        let t: number | null = null;
+        if (sNow * sNow + 2 * b * sNow + c < 0) {
+          t = from; // already inside
+        } else {
+          const disc = b * b - c;
+          if (disc >= 0) {
+            const sEnter = -b - Math.sqrt(disc);
+            if (sEnter >= sNow) t = m.spawnTime + sEnter / fmPerTick;
+          }
+        }
+        if (t !== null && t <= to && (!best || t < best.time)) {
+          best = { time: t, photonId: id, electronId: electron.id, targetOrbital: target };
+        }
       }
     }
+    return best;
   }
 
   // Pending events are all later than the playhead, so the current time slots in next.
@@ -252,8 +294,4 @@ export class SimulationEngine {
 function normalize(v: Vec3): Vec3 {
   const len = Math.hypot(v.x, v.y, v.z) || 1;
   return { x: v.x / len, y: v.y / len, z: v.z / len };
-}
-
-function distance(a: Vec3, b: Vec3): number {
-  return Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 }
