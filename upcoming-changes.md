@@ -57,32 +57,32 @@ The app aims to be scientifically accurate (README, "Accuracy & Validation"). Th
 
 ## Phase 2: Interaction bugs
 
-- [ ] **2.1 Clicks that miss the floor place particles at the center** ([app.ts:79-80](src/renderer/app.ts#L79-L80))
+- [x] **2.1 Clicks that miss the floor place particles at the center** ([app.ts:79-80](src/renderer/app.ts#L79-L80))
   - Problem: the code ignores `intersectPlane`'s null return value and checks a variable that is always set. Clicking above the horizon places the particle at (0, 0, 0).
   - Fix: `const hit = raycaster.ray.intersectPlane(plane, intersection); if (hit) { ... }`
   - Done when: clicking the sky does nothing.
 
-- [ ] **2.2 Rotating the camera counts as a click**
+- [x] **2.2 Rotating the camera counts as a click**
   - Problem: releasing the mouse after a drag fires `click`. Rotating with a particle type selected places a particle; rotating without one closes the particle panel.
   - Fix: record the pointer position on `pointerdown` and ignore the click if the pointer moved more than about 5 px.
   - Done when: rotating and panning never place or deselect particles.
 
-- [ ] **2.3 Make particles visible and clickable**
+- [x] **2.3 Make particles visible and clickable**
   - Problem: particles are 3 fm wide while the camera starts 150,000 fm or more away, so they render smaller than a pixel. Clicking one to inspect it is practically impossible. Confirmed in screenshots 2026-11-03: only labels are visible.
   - Fix: give particles a minimum size on screen (sprites with `sizeAttenuation: false`, or scale by camera distance), and raycast against that size or the labels.
   - Done when: every particle in every scenario can be seen and clicked from the starting camera position.
 
-- [ ] **2.4 The label toggle (L key) doesn't stick** ([app.ts:103-109](src/renderer/app.ts#L103-L109), [ParticleManager.ts](src/renderer/particles/ParticleManager.ts))
+- [x] **2.4 The label toggle (L key) doesn't stick** ([app.ts:103-109](src/renderer/app.ts#L103-L109), [ParticleManager.ts](src/renderer/particles/ParticleManager.ts))
   - Problem: new particles, and all particles after rewinding, get visible labels even when labels are switched off.
   - Fix: keep `labelsVisible` in `ParticleManager` and apply it in `addParticle`.
   - Done when: hiding labels lasts through placing particles, rewinding and loading scenarios.
 
-- [ ] **2.6 Labels at the nucleus overlap**
+- [x] **2.6 Labels at the nucleus overlap**
   - Problem: the proton and electron labels sit at the same point (electrons are placed at the nucleus), so they draw on top of each other ("el proton s)").
   - Fix: offset the electron label to the cloud's edge, or merge co-located labels into one line.
   - Done when: every label in every scenario is readable from the starting camera position.
 
-- [ ] **2.5 Remove photons that leave the scene**
+- [x] **2.5 Remove photons that leave the scene**
   - Problem: photons that miss keep flying and are tracked forever.
   - Fix: remove a photon once it is well past the atom outline (for example 2x its radius). Do it as a time-based rule so rewinding still works.
   - Done when: the particle count goes back down after a photon misses.
@@ -128,3 +128,7 @@ _Move finished items here with their commit hash._
   - Cloud radii computed at load from the hydrogen radial functions ([physics/hydrogen.ts](src/renderer/physics/hydrogen.ts)); matches the table in 1.4.
   - Removed the "atom boundary" sphere (it marked a0, which no longer matches any drawn surface); the camera now frames each scenario's `extent`.
   - Also fixed factual errors found in the scenario text: femtometer size (was 1000x off), X-ray image contrast, how the Sun makes deuterium, "all light comes from electron drops", hydrogen abundance, the stadium comparison (was about 8x off), a description of a glow effect that does not exist, and the deuteron capture narrative.
+- **Phase 2 (2.1-2.6)**: `412f0a8`. Verified with typecheck, lint and a scripted Electron run using real mouse events (12/12 checks: nucleus and cloud picking, sky click, drag with and without a selected type, label toggle across rewind, photon removal and restore on rewind, merged labels).
+  - Markers are screen-space sprites (constant pixel size); the femtometer-scale spheres remain for close zoom. A bound electron has no marker: clicking its cloud selects it, and markers take priority over clouds.
+  - Departure rule: a moving particle heading away from the origin beyond 2x the scenario extent is removed.
+  - Also fixed: photon trails were drawn at full length even behind the point where the photon was created (visible after Compton scattering).
