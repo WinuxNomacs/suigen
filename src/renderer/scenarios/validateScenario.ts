@@ -13,6 +13,7 @@ interface Alive {
   type: ParticleType;
   orbital?: OrbitalState;
   energy?: number;
+  moving?: boolean;
 }
 
 const fmt = (o: OrbitalState) => `${o.n}${'spdf'[o.l] ?? '?'}`;
@@ -43,7 +44,7 @@ export function checkScenarioPhysics(s: Scenario): string[] {
   s.particles.forEach((p, i) => {
     const id = p.id ?? `s${i}`;
     checkParticle(p, 0, `particle ${id}`);
-    alive.set(id, { type: p.type, orbital: p.orbital, energy: p.energy });
+    alive.set(id, { type: p.type, orbital: p.orbital, energy: p.energy, moving: !!p.direction });
   });
 
   const events = [...s.events].sort((a, b) => a.time - b.time);
@@ -55,12 +56,18 @@ export function checkScenarioPhysics(s: Scenario): string[] {
         checkParticle(e.particle, e.time, where);
         if (e.particle.id) {
           if (alive.has(e.particle.id)) problems.push(`${where}: id ${e.particle.id} already exists`);
-          alive.set(e.particle.id, { type: e.particle.type, orbital: e.particle.orbital, energy: e.particle.energy });
+          alive.set(e.particle.id, { type: e.particle.type, orbital: e.particle.orbital, energy: e.particle.energy, moving: !!e.particle.direction });
         }
         break;
       }
       case 'remove': {
         if (!e.targetId || !alive.delete(e.targetId)) problems.push(`${where}: no particle ${e.targetId}`);
+        break;
+      }
+      case 'move': {
+        const target = e.targetId ? alive.get(e.targetId) : undefined;
+        if (!target) problems.push(`${where}: no particle ${e.targetId}`);
+        else if (target.moving) problems.push(`${where}: ${e.targetId} is moving; its path is fixed by its start point and time`);
         break;
       }
       case 'absorb': {
@@ -82,7 +89,7 @@ export function checkScenarioPhysics(s: Scenario): string[] {
         checkParticle(e.particle, e.time, where);
         problems.push(...checkTransition(where, electron.orbital, e.targetOrbital, e.particle.energy, 'emit'));
         electron.orbital = e.targetOrbital;
-        if (e.particle.id) alive.set(e.particle.id, { type: 'photon', energy: e.particle.energy });
+        if (e.particle.id) alive.set(e.particle.id, { type: 'photon', energy: e.particle.energy, moving: true });
         break;
       }
     }

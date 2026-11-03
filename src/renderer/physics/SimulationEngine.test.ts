@@ -100,6 +100,49 @@ describe('SimulationEngine', () => {
     expect(Math.hypot(e2.x, e2.y, e2.z) / Math.hypot(photon.x, photon.y, photon.z)).toBeCloseTo(0.2472, 4);
   });
 
+  it('records a deletion that rewinding undoes', () => {
+    const { pm, engine } = setup();
+    engine.loadScenario(hydrogen, []);
+    engine.seek(50);
+    engine.removeUserParticle('e');
+    expect(pm.getParticle('e')).toBeUndefined();
+    engine.seek(20); // before the deletion
+    expect(pm.getParticle('e')).toBeDefined();
+    engine.seek(80); // replay deletes it again
+    expect(pm.getParticle('e')).toBeUndefined();
+  });
+
+  it('records a move that rewinding undoes, and absorbs photons at the new position', () => {
+    const { pm, engine } = setup();
+    engine.loadScenario(hydrogen, []);
+    const at = { x: 0, y: 0, z: 300000 };
+    engine.seek(10);
+    engine.moveParticles([{ id: 's0', position: at }, { id: 'e', position: at }]);
+    expect(pm.getParticle('e')!.data.position).toEqual(at);
+    engine.seek(5);
+    expect(pm.getParticle('e')!.data.position).toEqual({ x: 0, y: 0, z: 0 });
+    engine.seek(10);
+    expect(pm.getParticle('e')!.data.position).toEqual(at);
+
+    // Fired along x through the old position: misses the moved atom (1s radius 140,761 fm).
+    engine.addUserParticle('photon', { x: -600000, y: 0, z: 0 }, { direction: { x: 1, y: 0, z: 0 }, energy: 10.2 });
+    // Fired along x through the new position: absorbed.
+    engine.addUserParticle('photon', { x: -600000, y: 0, z: 300000 }, { direction: { x: 1, y: 0, z: 0 }, energy: 10.2 });
+    engine.seek(150);
+    expect(pm.getParticle('e')!.data.orbital).toEqual({ n: 2, l: 1, m: 0 });
+    expect(pm.getAllParticles().filter(p => p.type === 'photon').map(p => p.position.z)).toEqual([0]);
+  });
+
+  it('does not move particles whose path is fixed', () => {
+    const { pm, engine } = setup();
+    engine.loadScenario(hydrogen, []);
+    engine.addUserParticle('photon', { x: -600000, y: 0, z: 0 }, { direction: { x: 1, y: 0, z: 0 }, energy: 5 });
+    const id = pm.getAllParticles().find(p => p.type === 'photon')!.id;
+    expect(engine.isMoving(id)).toBe(true);
+    engine.moveParticles([{ id, position: { x: 0, y: 0, z: 0 } }]);
+    expect(pm.getParticle(id)!.data.position.x).toBe(-600000);
+  });
+
   it('reports real time for the loaded scenario', () => {
     const { engine } = setup();
     const s = loadPreset('photon-emission')!;

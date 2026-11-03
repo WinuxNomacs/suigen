@@ -30,12 +30,14 @@ export interface ParticleData {
 
 export interface ScenarioEvent {
   time: number;
-  action: 'spawn' | 'absorb' | 'emit' | 'remove';
+  action: 'spawn' | 'absorb' | 'emit' | 'remove' | 'move';
   particle?: Partial<ParticleData> & { type: ParticleType };
   photonId?: string;
   electronId?: string;
   targetId?: string;
   targetOrbital?: OrbitalState;
+  /** New position for a `move` event, in fm. */
+  position?: Vec3;
 }
 
 export interface LaymanDescription {

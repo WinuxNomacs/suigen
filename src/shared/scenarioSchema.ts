@@ -42,6 +42,7 @@ const event = z.discriminatedUnion('action', [
     particle,
   }),
   z.strictObject({ time: ticks, action: z.literal('remove'), targetId: z.string() }),
+  z.strictObject({ time: ticks, action: z.literal('move'), targetId: z.string(), position: vec3 }),
 ]);
 
 const compression = z

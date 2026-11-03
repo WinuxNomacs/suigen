@@ -43,6 +43,21 @@ describe('scenario validation catches mistakes', () => {
     expect(problemsOf(s).join()).toMatch(/no particle nobody/);
   });
 
+  it('a move event for a missing or moving particle', () => {
+    const s = clone(RAW_PRESETS['photon-absorption']) as { events: Array<Record<string, unknown>> };
+    s.events.push({ time: 5, action: 'move', targetId: 'photon1', position: { x: 0, y: 0, z: 0 } });
+    s.events.push({ time: 6, action: 'move', targetId: 'ghost', position: { x: 0, y: 0, z: 0 } });
+    const problems = problemsOf(s).join();
+    expect(problems).toMatch(/photon1 is moving/);
+    expect(problems).toMatch(/no particle ghost/);
+  });
+
+  it('accepts a valid move event', () => {
+    const s = clone(RAW_PRESETS['hydrogen-ground-state']) as { events: Array<Record<string, unknown>> };
+    s.events.push({ time: 5, action: 'move', targetId: 's0', position: { x: 1, y: 0, z: 0 } });
+    expect(problemsOf(s)).toEqual([]);
+  });
+
   it('a massive particle moving at c outside a compressed span', () => {
     const s = clone(RAW_PRESETS['deuterium-formation']) as Record<string, unknown>;
     delete s.compressions;

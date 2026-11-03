@@ -13,7 +13,11 @@ const viewport = document.getElementById('viewport')!;
 const sceneManager = new SceneManager(viewport);
 const particleManager = new ParticleManager(sceneManager.scene);
 const engine = new SimulationEngine(particleManager);
-engine.setOnLoad(() => sceneManager.frame(engine.getExtent()));
+engine.setOnLoad(() => {
+  sceneManager.frame(engine.getExtent());
+  // Scenario particle ids repeat between scenarios (s0, s1, ...), so a selection must not carry over.
+  clearSelection();
+});
 
 const toolbar = new Toolbar();
 const timeline = new Timeline(engine);
@@ -70,24 +74,154 @@ const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 const placementPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 
-// A click that ends a camera drag is not a click: ignore it if the pointer moved more than this.
+function setRay(event: MouseEvent): void {
+  const rect = viewport.getBoundingClientRect();
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(mouse, sceneManager.camera);
+}
+
+// --- Selection -------------------------------------------------------------------------------
+
+let selectedId: string | null = null;
+
+function select(id: string): void {
+  const p = particleManager.getParticle(id);
+  if (!p) return;
+  selectedId = id;
+  particleManager.setSelected(id);
+  infoPanel.showParticle(p.data, deleteSelected);
+}
+
+function clearSelection(): void {
+  selectedId = null;
+  particleManager.setSelected(null);
+  infoPanel.clearSelection();
+}
+
+function deleteSelected(): void {
+  if (!selectedId) return;
+  const id = selectedId;
+  clearSelection();
+  engine.removeUserParticle(id);
+}
+
+infoPanel.setOnLeaveParticle(() => {
+  selectedId = null;
+  particleManager.setSelected(null);
+});
+
+document.addEventListener('keydown', (e) => {
+  const target = e.target as HTMLElement | null;
+  if (target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName)) return;
+  if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId) {
+    e.preventDefault();
+    deleteSelected();
+  } else if (e.key === 'Escape') {
+    clearSelection();
+  }
+});
+
+// --- Dragging --------------------------------------------------------------------------------
+// A drag that starts on a marker moves that particle (a nucleon moves its whole atom) in the
+// horizontal plane through it. Clouds are not handles, so the camera can still be rotated.
+
+// A click that ends a drag is not a click: ignore it if the pointer moved more than this.
 const DRAG_THRESHOLD_PX = 5;
 let pointerDown: { x: number; y: number } | null = null;
+
+interface Drag {
+  handleId: string;
+  start: Map<string, THREE.Vector3>;
+  plane: THREE.Plane;
+  grab: THREE.Vector3;
+  moved: boolean;
+  pointerId: number;
+}
+let drag: Drag | null = null;
+
+function markerUnderPointer(event: MouseEvent): string | undefined {
+  setRay(event);
+  const hits = raycaster.intersectObjects(particleManager.getMarkers(), false);
+  return hits.length > 0 ? particleIdOf(hits[0].object) : undefined;
+}
+
+// Capture phase: runs before OrbitControls' own pointerdown on the canvas, so it can disable them.
 viewport.addEventListener('pointerdown', (event) => {
   pointerDown = { x: event.clientX, y: event.clientY };
+  if (event.button !== 0 || toolbar.getSelectedType()) return;
+  const id = markerUnderPointer(event);
+  if (!id || engine.isMoving(id)) return;
+  const handle = particleManager.getParticle(id)!;
+  const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -handle.data.position.y);
+  const grab = raycaster.ray.intersectPlane(plane, new THREE.Vector3());
+  if (!grab) return;
+  const start = new Map<string, THREE.Vector3>();
+  for (const gid of particleManager.getDragGroup(id)) {
+    const p = particleManager.getParticle(gid)!.data.position;
+    start.set(gid, new THREE.Vector3(p.x, p.y, p.z));
+  }
+  drag = { handleId: id, start, plane, grab, moved: false, pointerId: event.pointerId };
+  sceneManager.controls.enabled = false;
+  viewport.setPointerCapture(event.pointerId);
+}, { capture: true });
+
+function dragTargets(event: PointerEvent): Map<string, THREE.Vector3> | null {
+  if (!drag) return null;
+  setRay(event);
+  const hit = raycaster.ray.intersectPlane(drag.plane, new THREE.Vector3());
+  if (!hit) return null;
+  const delta = hit.sub(drag.grab);
+  // Keep the dragged particle within the framed extent.
+  const handleTo = drag.start.get(drag.handleId)!.clone().add(delta);
+  const limit = engine.getExtent();
+  if (handleTo.length() > limit) {
+    handleTo.setLength(limit);
+    delta.copy(handleTo).sub(drag.start.get(drag.handleId)!);
+  }
+  const targets = new Map<string, THREE.Vector3>();
+  for (const [id, from] of drag.start) targets.set(id, from.clone().add(delta));
+  return targets;
+}
+
+viewport.addEventListener('pointermove', (event) => {
+  if (!drag || event.pointerId !== drag.pointerId) return;
+  if (!drag.moved && pointerDown && Math.hypot(event.clientX - pointerDown.x, event.clientY - pointerDown.y) <= DRAG_THRESHOLD_PX) return;
+  drag.moved = true;
+  const targets = dragTargets(event);
+  if (!targets) return;
+  // Preview only; the move is recorded in the event log on release.
+  for (const [id, pos] of targets) particleManager.updatePosition(id, { x: pos.x, y: pos.y, z: pos.z });
 });
+
+function endDrag(event: PointerEvent, commit: boolean): void {
+  if (!drag || event.pointerId !== drag.pointerId) return;
+  const d = drag;
+  const targets = commit && d.moved ? dragTargets(event) : null; // needs `drag` still set
+  drag = null;
+  sceneManager.controls.enabled = true;
+  if (viewport.hasPointerCapture(event.pointerId)) viewport.releasePointerCapture(event.pointerId);
+  if (!d.moved) return;
+  if (targets) {
+    engine.moveParticles([...targets].map(([id, p]) => ({ id, position: { x: p.x, y: p.y, z: p.z } })));
+  } else {
+    // Cancelled: put the previewed particles back.
+    for (const [id, p] of d.start) particleManager.updatePosition(id, { x: p.x, y: p.y, z: p.z });
+  }
+  select(d.handleId);
+}
+
+viewport.addEventListener('pointerup', (event) => endDrag(event, true));
+viewport.addEventListener('pointercancel', (event) => endDrag(event, false));
+
+// --- Clicking --------------------------------------------------------------------------------
 
 viewport.addEventListener('click', (event) => {
   const start = pointerDown;
   pointerDown = null;
   if (start && Math.hypot(event.clientX - start.x, event.clientY - start.y) > DRAG_THRESHOLD_PX) return;
 
-  const rect = viewport.getBoundingClientRect();
-  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-  raycaster.setFromCamera(mouse, sceneManager.camera);
-
+  setRay(event);
   const selectedType = toolbar.getSelectedType();
 
   if (selectedType) {
@@ -105,11 +239,10 @@ viewport.addEventListener('click', (event) => {
   const hits = raycaster.intersectObjects(particleManager.getMarkers(), false);
   if (hits.length === 0) hits.push(...raycaster.intersectObjects(particleManager.getClouds(), true));
   const id = hits.length > 0 ? particleIdOf(hits[0].object) : undefined;
-  const p = id ? particleManager.getParticle(id) : undefined;
-  if (p) {
-    infoPanel.showParticle(p.data);
+  if (id && particleManager.getParticle(id)) {
+    select(id);
   } else {
-    infoPanel.clearSelection();
+    clearSelection();
   }
 });
 
@@ -135,6 +268,9 @@ function animate(): void {
   if (engine.state.playing) {
     engine.tick(deltaSec * TICKS_PER_REAL_SECOND);
   }
+
+  // The selection ends when its particle stops existing (rewound before its spawn, absorbed, departed).
+  if (selectedId && !particleManager.getParticle(selectedId)) clearSelection();
 
   particleManager.update(engine.state.time);
   timeline.update();

@@ -109,6 +109,27 @@ export class SimulationEngine {
     this.advanceTo(this.state.time);
   }
 
+  /** Records a deletion at the current time; rewinding before it brings the particle back. */
+  removeUserParticle(id: string): void {
+    if (!this.particleManager.getParticle(id)) return;
+    this.insertEvent({ time: this.state.time, action: 'remove', targetId: id });
+    this.advanceTo(this.state.time);
+  }
+
+  /** Records new positions for static particles at the current time. Moving particles are skipped. */
+  moveParticles(moves: Array<{ id: string; position: Vec3 }>): void {
+    for (const { id, position } of moves) {
+      if (this.isMoving(id) || !this.particleManager.getParticle(id)) continue;
+      this.insertEvent({ time: this.state.time, action: 'move', targetId: id, position: { ...position } });
+    }
+    this.advanceTo(this.state.time);
+  }
+
+  /** True for particles whose path is fixed by a start point and direction (photons, recoils). */
+  isMoving(id: string): boolean {
+    return this.motions.has(id);
+  }
+
   private rebuild(): void {
     this.particleManager.clear();
     this.motions.clear();
@@ -273,6 +294,13 @@ export class SimulationEngine {
             ids.push(event.electronId);
           }
           ids.push(this.spawn({ ...event.particle, type: 'photon' }, event.time).id);
+        }
+        break;
+      }
+      case 'move': {
+        if (event.targetId && event.position && this.particleManager.getParticle(event.targetId) && !this.motions.has(event.targetId)) {
+          this.particleManager.updatePosition(event.targetId, event.position);
+          ids.push(event.targetId);
         }
         break;
       }

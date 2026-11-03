@@ -32,6 +32,7 @@ export class ParticleManager {
   private particles: Map<string, SceneParticle> = new Map();
   private scene: THREE.Scene;
   private labelsVisible = true;
+  private selectedId: string | null = null;
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
@@ -70,7 +71,46 @@ export class ParticleManager {
     }
 
     this.particles.set(id, sp);
+    if (id === this.selectedId) this.applySelection(sp, true);
     return data;
+  }
+
+  /** Highlights one particle (or none). Kept across rebuilds, so a rewind re-highlights it. */
+  setSelected(id: string | null): void {
+    if (this.selectedId) {
+      const prev = this.particles.get(this.selectedId);
+      if (prev) this.applySelection(prev, false);
+    }
+    this.selectedId = id;
+    const sp = id ? this.particles.get(id) : undefined;
+    if (sp) this.applySelection(sp, true);
+  }
+
+  private applySelection(sp: SceneParticle, on: boolean): void {
+    sp.label.element.classList.toggle('selected', on);
+    const marker = getMarker(sp.mesh);
+    if (marker) {
+      marker.userData.baseScale ??= marker.scale.x;
+      marker.scale.setScalar(marker.userData.baseScale * (on ? 1.6 : 1));
+    }
+  }
+
+  /**
+   * The particles a drag on `id` moves: for a nucleon, its whole nucleus plus the electron clouds
+   * centered on it, so an atom moves as one; otherwise just the particle.
+   */
+  getDragGroup(id: string): string[] {
+    const sp = this.particles.get(id);
+    if (!sp) return [];
+    if (sp.data.type !== 'proton' && sp.data.type !== 'neutron') return [id];
+    const group: string[] = [];
+    for (const other of this.particles.values()) {
+      const near = other.mesh.position.distanceTo(sp.mesh.position) <= NUCLEUS_CLUSTER_FM;
+      const nucleon = other.data.type === 'proton' || other.data.type === 'neutron';
+      const cloud = other.data.type === 'electron' && !!other.data.orbital;
+      if (near && (nucleon || cloud)) group.push(other.data.id);
+    }
+    return group;
   }
 
   private attachOrbital(sp: SceneParticle, orbital: OrbitalState): void {

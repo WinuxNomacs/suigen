@@ -632,6 +632,50 @@
               "targetId"
             ],
             "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "time": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Animation ticks (see physics/time.ts)"
+              },
+              "action": {
+                "type": "string",
+                "const": "move"
+              },
+              "targetId": {
+                "type": "string"
+              },
+              "position": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  },
+                  "z": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "y",
+                  "z"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "time",
+              "action",
+              "targetId",
+              "position"
+            ],
+            "additionalProperties": false
           }
         ]
       }

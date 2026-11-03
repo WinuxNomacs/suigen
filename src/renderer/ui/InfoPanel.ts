@@ -45,11 +45,17 @@ export class InfoPanel {
   private engine: SimulationEngine;
   private mode: PanelMode = 'gallery';
   private currentScenario: Scenario | null = null;
+  private onLeaveParticle?: () => void;
 
   constructor(container: HTMLElement, engine: SimulationEngine) {
     this.container = container;
     this.engine = engine;
     this.renderGallery();
+  }
+
+  /** Called when the particle view is closed from inside the panel (back button). */
+  setOnLeaveParticle(cb: () => void): void {
+    this.onLeaveParticle = cb;
   }
 
   private show(...children: Child[]): void {
@@ -159,11 +165,17 @@ export class InfoPanel {
     );
   }
 
-  showParticle(p: ParticleData): void {
+  showParticle(p: ParticleData, onDelete?: () => void): void {
     this.mode = 'particle';
     const line = (text: string) => h('p', {}, text);
+    let del: HTMLElement | null = null;
+    if (onDelete) {
+      del = h('button', { class: 'delete-btn', id: 'delete-particle', title: 'Delete (Del)' }, 'Delete particle');
+      del.addEventListener('click', onDelete);
+    }
     this.show(
       this.backButton('back-to-desc', '\u2190 Description', () => {
+        this.onLeaveParticle?.();
         if (this.currentScenario) this.renderDescription(this.currentScenario);
         else this.renderGallery();
       }),
@@ -176,6 +188,8 @@ export class InfoPanel {
       p.orbital && line(`orbital: n=${p.orbital.n}, l=${p.orbital.l}, m=${p.orbital.m}`),
       p.energy && line(`energy: ${formatEnergy(p.energy)}`),
       p.speed !== undefined && line(`speed: ${p.speed} c`),
+      del,
+      h('p', { class: 'hint' }, 'Drag a marker to move it (a nucleus moves with its electron clouds). Esc clears the selection.'),
     );
   }
 
