@@ -112,10 +112,10 @@ The app aims to be scientifically accurate (README, "Accuracy & Validation"). Th
 
 ## Phase 4: Tooling and documentation
 
-- [ ] **4.1 Upgrade ESLint 8 to ESLint 9** (ESLint 8 is no longer supported), moving to `eslint.config.mjs` and the matching typescript-eslint config. Lint results should not change.
-- [ ] **4.2 Review `npm audit`**: 39 warnings, all in development tools (0 in what the app ships). Fix what upgrades without breaking changes; write down the rest.
-- [ ] **4.3 Add a "Status" section to the README** saying what is built versus planned (forces, worker threads, save/load, measuring tools, d/f orbitals), so readers don't take the wishlist as current features.
-- [ ] **4.4 (Optional)** Split three.js into its own file to clear the 500 kB bundle warning.
+- [x] **4.1 Upgrade ESLint 8 to ESLint 9** (ESLint 8 is no longer supported), moving to `eslint.config.mjs` and the matching typescript-eslint config. Lint results should not change.
+- [x] **4.2 Review `npm audit`**: 39 warnings, all in development tools (0 in what the app ships). Fix what upgrades without breaking changes; write down the rest.
+- [x] **4.3 Add a "Status" section to the README** saying what is built versus planned (forces, worker threads, save/load, measuring tools, d/f orbitals), so readers don't take the wishlist as current features.
+- [ ] **4.4 (Optional, deferred)** Split three.js into its own file to clear the 500 kB bundle warning. Deferred 2026-11-03: the warning is about download size, which does not apply to a desktop app loading from disk.
 
 ---
 
@@ -138,3 +138,6 @@ _Move finished items here with their commit hash._
   - JSON Schema at [src/shared/scenario.schema.json](src/shared/scenario.schema.json), checked by a test; regenerate with `npm test -- -u`. VS Code maps it to `scenarios/*.json` in `.vscode/settings.json`.
   - Bug found by the new engine tests and fixed: absorption was checked only at sampled frame times, so seeking or stepping past a cloud (or a long frame at high speed) let a matching photon pass through. The crossing time is now solved exactly.
   - Lint rule (`no-restricted-syntax`) rejects `innerHTML`/`outerHTML` assignment.
+- **Phase 4 (4.1-4.3)**: `ba00e44`. Verified typecheck, lint, 37 tests, web build, `npm run package` (darwin arm64) and a launch of the packaged app.
+  - ESLint 9.39.5, not 10: eslint-plugin-import 2.32.0 supports ESLint up to 9. Lint rules were checked to still fire (unresolved import, unused variable, `any`, `innerHTML`).
+  - `npm audit fix` (compatible updates only) cleared all 5 high-severity findings: 39 -> 34, all moderate. The remaining 34 trace to two packages: `minimatch` < 11.0.1 (via ESLint 9) and `glob` 9-14.0.1 (via Electron Forge 8). Fixing them needs major-version changes those tools don't support (npm's suggested "fix" downgrades to Forge 7 / ESLint 4). Dev tooling only, never shipped, and it only processes the project's own file patterns. Recheck when ESLint or Forge release updates.
