@@ -29,3 +29,10 @@ export const DEFAULT_ATOM_RADIUS_FM = 53000;
 
 export const DEFAULT_SPEED = 1;
 export const TIME_STEP_FS = 0.1;
+
+export const FS_PER_REAL_SECOND = 100;
+export const VISUAL_SPEED_FM_PER_FS = 50;
+export const ORBITAL_MORPH_FS = 50;
+
+export const RYDBERG_EV = 13.6;
+export const ABSORPTION_TOLERANCE_EV = 0.05;
