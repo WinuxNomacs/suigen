@@ -208,3 +208,4 @@ _Move finished items here with their commit hash._
   - `npm audit`: still 34 moderate, 0 high. All are `minimatch` < 11.0.1 (GHSA-g3hv-75wg-m249) and `glob` 9-14.0.1 (GHSA-3g3m-2fjr-6pw4) pinned inside Electron Forge 8, ESLint 10 and typescript-eslint, which are already at their latest versions. npm's suggested fix downgrades them. Dev tooling only.
   - `fsevents` install script denied in `allowScripts` (npm 11.20 asks): its prebuilt binary ships in the package, so the script isn't needed.
 - **Phase 8 (8.1-8.6)**: `5cbef8c`. Typecheck, lint, 50 tests; scripted Electron checks 22/22 plus the new sandbox and energy-level panel text.
+- **Phase 9 (9.1-9.2)**: `819fa1d`. Typecheck, lint, 53 tests (duration for each scenario, nothing changes after it, reset). Scripted Electron run with real mouse input: button order, scrubber range, drag to 70%, step back/forward by 10 ticks, play icon, reset, pause during scrub and resume; the 22 phase 2 and 5 checks still pass.
