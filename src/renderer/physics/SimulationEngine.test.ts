@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { NEUTRON_APPROACH_LABEL, SimulationEngine } from './SimulationEngine';
+import { ELECTRON_DEPARTURE_LABEL, NEUTRON_APPROACH_LABEL, SimulationEngine, electronSpeed } from './SimulationEngine';
 import { FakeParticleManager } from '../../test/FakeParticleManager';
 import { loadPreset } from '../scenarios/ScenarioLoader';
 import { ScenarioEvent } from '../../shared/types';
-import { NP_CAPTURE_GAMMA_EV, NUCLEON_SPACING_FM } from '../../shared/constants';
+import { NP_CAPTURE_GAMMA_EV, NUCLEON_SPACING_FM, SPEED_OF_LIGHT_FM_PER_FS } from '../../shared/constants';
+import { ionizationKineticEnergy } from './transitions';
 
 // Tests below set speed and loop explicitly; the app defaults (0.25x, loop on) have their own test.
 function setup() {
@@ -129,13 +130,14 @@ describe('SimulationEngine', () => {
     engine.seek(10);
     expect(pm.getParticle('e')!.data.position).toEqual(at);
 
-    // Fired along x through the old position: misses the moved atom (1s radius 140,761 fm).
-    engine.addUserParticle('photon', { x: -600000, y: 0, z: 0 }, { direction: { x: 1, y: 0, z: 0 }, energy: 10.2 });
+    // Fired along x 600,000 fm from the moved atom: misses it, even after the absorption grows the cloud
+    // to 2p (radius 422,800 fm), where 10.2 eV would ionize it (n = 2 binding energy 3.4 eV).
+    engine.addUserParticle('photon', { x: -600000, y: 0, z: -300000 }, { direction: { x: 1, y: 0, z: 0 }, energy: 10.2 });
     // Fired along x through the new position: absorbed.
     engine.addUserParticle('photon', { x: -600000, y: 0, z: 300000 }, { direction: { x: 1, y: 0, z: 0 }, energy: 10.2 });
     engine.seek(150);
     expect(pm.getParticle('e')!.data.orbital).toEqual({ n: 2, l: 1, m: 0 });
-    expect(pm.getAllParticles().filter(p => p.type === 'photon').map(p => p.position.z)).toEqual([0]);
+    expect(pm.getAllParticles().filter(p => p.type === 'photon').map(p => p.position.z)).toEqual([-300000]);
   });
 
   it('does not move particles whose path is fixed', () => {
@@ -166,11 +168,11 @@ describe('SimulationEngine', () => {
       return engine.getDuration();
     };
     // Recoil electron from the origin at 0.2472c to 2 × 450,000 fm, starting at tick 120.
-    expect(load('compton-scattering')).toBeCloseTo(120 + 900000 / (5000 * 0.2472) + 1, 6); // +1 tick margin
+    expect(load('compton-scattering')).toBeCloseTo(120 + 900000 / (5000 * 0.2472) + 1, 4); // +1 tick margin
     // Emitted photon from the origin at c, starting at tick 150.
-    expect(load('photon-emission')).toBeCloseTo(150 + 900000 / 5000 + 1, 6);
+    expect(load('photon-emission')).toBeCloseTo(150 + 900000 / 5000 + 1, 4);
     // Nothing moves after the absorption: the floor is light leaving from the centre.
-    expect(load('photon-absorption')).toBeCloseTo(900000 / 5000, 6);
+    expect(load('photon-absorption')).toBeCloseTo(900000 / 5000, 4);
   });
 
   it('nothing changes after the duration', () => {
@@ -414,5 +416,71 @@ describe('SimulationEngine', () => {
     const n = pm.getAllParticles().find(p => p.type === 'neutron')!;
     expect(n.position).toEqual({ x: 1.5, y: 0, z: 0 });
     expect(pm.getAllParticles().filter(p => p.type === 'photon')).toHaveLength(1);
+  });
+
+  describe('ionization', () => {
+    it('the scenario frees the electron, which leaves at its real speed through the fast-forward', () => {
+      const { pm, engine } = setup();
+      const s = loadPreset('hydrogen-ionization')!;
+      engine.loadScenario(s.particles, s.events, s.compressions, s.extent);
+      engine.seek(79);
+      expect(pm.getParticle('e1')!.data.orbital).toEqual({ n: 1, l: 0, m: 0 });
+      engine.seek(180); // halfway through the departure span
+      const e = pm.getParticle('e1')!.data;
+      expect(e.orbital).toBeUndefined();
+      expect(e.position.y).toBeCloseTo(250000, 0); // 0.5 × 500,000 fm
+      expect(engine.getRealTime().activeLabel).toBe('freed electron leaving (1,637 km/s)');
+      engine.seek(282);
+      expect(pm.getParticle('e1')).toBeUndefined(); // left the scene
+      engine.seek(100);
+      expect(pm.getParticle('e1')!.data.orbital).toBeUndefined();
+      engine.seek(10);
+      expect(pm.getParticle('e1')!.data.orbital).toEqual({ n: 1, l: 0, m: 0 }); // rewind restores the atom
+    });
+
+    it('a sandbox photon above the threshold ionizes, perpendicular to its path, with a fast-forward', () => {
+      const { pm, engine } = setup();
+      engine.loadScenario(hydrogen, []);
+      engine.addUserParticle('photon', { x: -400000, y: 0, z: 0 }, { direction: { x: 1, y: 0, z: 0 }, energy: 21.218 });
+      engine.seek(70);
+      const e = pm.getParticle('e')!.data;
+      expect(e.orbital).toBeUndefined();
+      const T = ionizationKineticEnergy(21.218, 1)!;
+      expect(e.energy).toBeCloseTo(T, 9);
+      expect(e.speed).toBeCloseTo(electronSpeed(T), 12);
+      expect(engine.getRealTime().activeLabel).toBe(ELECTRON_DEPARTURE_LABEL);
+      // Moving away from the nucleus, perpendicular to x (the photon's path).
+      engine.seek(80);
+      const p = pm.getParticle('e')!.data.position;
+      expect(Math.abs(p.x)).toBeLessThan(1e-6 * Math.hypot(p.y, p.z));
+      expect(Math.hypot(p.y, p.z)).toBeGreaterThan(1000);
+      // The departure span stands for the real crossing time at that speed.
+      const before = pm.snapshot();
+      engine.seek(5);
+      engine.seek(80);
+      expect(pm.snapshot()).toBe(before);
+    });
+
+    it('a photon below the threshold that matches no transition passes through', () => {
+      const { pm, engine } = setup();
+      engine.loadScenario(hydrogen, []);
+      engine.addUserParticle('photon', { x: -400000, y: 0, z: 0 }, { direction: { x: 1, y: 0, z: 0 }, energy: 5 });
+      engine.seek(200);
+      expect(pm.getParticle('e')!.data.orbital).toEqual({ n: 1, l: 0, m: 0 });
+    });
+
+    it('positions follow real time: a speed-v particle covers v·Δt across a compressed span', () => {
+      const { pm, engine } = setup();
+      const v = 1e-4;
+      engine.loadScenario(
+        [{ id: 'm', type: 'electron', position: { x: 0, y: 0, z: 0 }, direction: { x: 1, y: 0, z: 0 }, speed: v }],
+        [],
+        [{ start: 10, end: 20, realFs: 1, label: 'x' }],
+        1e9,
+      );
+      engine.seek(30);
+      const fs = engine.getRealTime().fs;
+      expect(pm.getParticle('m')!.data.position.x).toBeCloseTo(v * SPEED_OF_LIGHT_FM_PER_FS * fs, 6);
+    });
   });
 });

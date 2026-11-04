@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { hydrogenRadii } from './hydrogen';
 import { findTransition, energyLevel } from './transitions';
-import { formatDuration, realTime } from './time';
+import { formatDuration, realTime, ticksAtRealTime } from './time';
 import {
   FS_PER_TICK, SPEED_OF_LIGHT_FM_PER_FS, LIGHT_SPEED_FM_PER_TICK, HYDROGEN_BINDING_EV, HC_EV_PM,
   NP_CAPTURE_GAMMA_EV, THERMAL_NEUTRON_ENERGY_EV,
@@ -89,6 +89,13 @@ describe('real time', () => {
     expect(after.fs).toBeCloseTo(1.6e6 + 100 * FS_PER_TICK, 6);
     expect(after.approximate).toBe(true);
     expect(after.activeLabel).toBeUndefined();
+  });
+
+  it('ticksAtRealTime inverts realTime, inside and outside compressed spans', () => {
+    const spans = [...lifetime, { start: 300, end: 320, realFs: 50, label: 'b' }];
+    for (const t of [0, 50, 199.5, 200, 250, 300, 310, 320, 500]) {
+      expect(ticksAtRealTime(realTime(t, FS_PER_TICK, spans).fs, FS_PER_TICK, spans)).toBeCloseTo(t, 4); // 1.6e6 fs + 1e-5 fs steps: float rounding ~1e-6 ticks
+    }
   });
 
   it('formats with automatic units', () => {

@@ -1,0 +1,128 @@
+{
+  "name": "Hydrogen Ionization",
+  "description": "An ultraviolet photon frees the electron from a hydrogen atom, leaving a bare proton",
+  "layman": {
+    "title": "Knocking an Electron Free",
+    "summary": "Watch an ultraviolet photon tear the electron out of a hydrogen atom",
+    "sections": {
+      "whatsHappening": "A photon of ultraviolet light flies into a hydrogen atom. It carries more energy than the 13.6 electron volts that hold the electron to the proton, so instead of lifting the electron to a higher orbital, it frees the electron completely. The photon vanishes, the electron cloud disappears, and the electron flies away as a free particle, leaving a bare proton behind. The atom has been split into its two pieces: this is called ionization.",
+      "whyItMatters": "Ionization is why ultraviolet light and X-rays are harmful: freed electrons break chemical bonds, including those in DNA. It is also the photoelectric effect, which Einstein explained in 1905 by treating light as particles. Lab instruments called photoelectron spectrometers use this exact process, with the same 21.2 eV ultraviolet light from a helium lamp, to measure how tightly atoms and molecules hold their electrons.",
+      "whatToWatch": "Follow the photon in from the left. When it reaches the atom, the round 1s cloud vanishes and a single electron leaves upward at 1,637 km/s. That is fast, but under 1% of the speed of light, so its trip out of the picture is fast-forwarded: the timeline says so. The proton stays put. It recoils too, but 1,836 times more slowly (891 m/s).",
+      "funFact": "The glowing red clouds in photos of nebulae such as the Orion Nebula are hydrogen that ultraviolet starlight keeps ionizing. When a proton recaptures an electron, the electron cascades down the energy levels, and one step, from n = 3 to n = 2, gives off red light at 656 nm."
+    }
+  },
+  "scientific": {
+    "narrative": "A photon of energy 21.218 eV (the He I resonance line, λ = 58.43 nm) is absorbed by a hydrogen atom in its ground state. The binding energy is 13.598 eV (the Rydberg energy with the reduced-mass correction; threshold wavelength 91.18 nm, the Lyman limit), so the excess 7.6197 eV becomes kinetic energy, shared by the electron and proton in inverse proportion to their masses because their momenta are equal and opposite: the electron receives 7.6156 eV (v = 0.005459c = 1,637 km/s) and the proton 0.0041 eV (891 m/s). The photon's own momentum (21.2 eV/c) is negligible beside the electron's 2,790 eV/c. For an s electron the photoelectrons are distributed as cos²θ about the light's polarization axis (asymmetry parameter β = 2); the electron is drawn along that axis, perpendicular to the photon's path.",
+    "equations": [
+      {
+        "label": "Photoelectric relation",
+        "tex": "T = hν - E_bind = 21.218 eV - 13.598 eV = 7.620 eV"
+      },
+      {
+        "label": "Binding energy (ground state)",
+        "tex": "E_bind = R∞hc · μ/m_e = 13.598 eV"
+      },
+      {
+        "label": "Electron's share",
+        "tex": "T_e = (hν - E_bind) · m_p / (m_p + m_e) = 7.6156 eV"
+      },
+      {
+        "label": "Electron speed",
+        "tex": "γ = 1 + T_e / m_e c², v = c √(1 - 1/γ²) = 0.005459 c"
+      },
+      {
+        "label": "Angular distribution (s electron)",
+        "tex": "dσ/dΩ ∝ cos²θ (β = 2)"
+      }
+    ],
+    "constants": [
+      "Ionization energy of hydrogen: 13.598 eV (91.18 nm)",
+      "Photon: 21.218 eV, λ = 58.43 nm (He I line)",
+      "Freed electron: 7.6156 eV, 1,637 km/s",
+      "Proton recoil: 0.0041 eV, 891 m/s"
+    ]
+  },
+  "particles": [
+    {
+      "id": "p0",
+      "type": "proton",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      }
+    },
+    {
+      "id": "e1",
+      "type": "electron",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "orbital": {
+        "n": 1,
+        "l": 0,
+        "m": 0
+      }
+    }
+  ],
+  "events": [
+    {
+      "time": 0,
+      "action": "spawn",
+      "particle": {
+        "id": "photon1",
+        "type": "photon",
+        "position": {
+          "x": -400000,
+          "y": 0,
+          "z": 0
+        },
+        "direction": {
+          "x": 1,
+          "y": 0,
+          "z": 0
+        },
+        "energy": 21.218036
+      }
+    },
+    {
+      "time": 80,
+      "action": "ionize",
+      "photonId": "photon1",
+      "electronId": "e1",
+      "particle": {
+        "id": "e1",
+        "type": "electron",
+        "position": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "direction": {
+          "x": 0,
+          "y": 1,
+          "z": 0
+        },
+        "speed": 0.005459492,
+        "energy": 7.615601
+      }
+    }
+  ],
+  "compressions": [
+    {
+      "start": 80,
+      "end": 280,
+      "realFs": 0.30549005,
+      "label": "freed electron leaving (1,637 km/s)"
+    }
+  ],
+  "simplifications": [
+    "The photon is absorbed when it reaches the nucleus. Real absorption has no single point of impact.",
+    "The electron's direction is random in reality, most likely along the light's polarization (a cos²θ distribution). Here it leaves straight up, the most likely direction for vertically polarized light.",
+    "The proton's recoil (891 m/s) is not drawn: while the electron leaves the picture it moves about 270 fm, far too little to see at this scale.",
+    "The electron's departure is fast-forwarded: it really takes 0.31 fs to cross the 500,000 fm shown."
+  ],
+  "extent": 250000
+}

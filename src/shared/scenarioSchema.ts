@@ -45,6 +45,13 @@ const event = z.discriminatedUnion('action', [
   z.strictObject({ time: ticks, action: z.literal('move'), targetId: z.string(), position: vec3 }),
   z.strictObject({
     time: ticks,
+    action: z.literal('ionize'),
+    photonId: z.string(),
+    electronId: z.string(),
+    particle: particle.describe('The freed electron: its direction, speed (fraction of c) and kinetic energy (eV)'),
+  }),
+  z.strictObject({
+    time: ticks,
     action: z.literal('capture'),
     neutronId: z.string(),
     protonId: z.string(),

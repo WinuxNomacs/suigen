@@ -1,15 +1,29 @@
 import { OrbitalState, ScenarioEvent, SimulationState, ParticleData, ParticleType, TimeCompression, Vec3 } from '../../shared/types';
 import {
-  CAPTURE_DISTANCE_FM, DEFAULT_PLAYBACK_SPEED, DEFAULT_SCENE_EXTENT_FM, FS_PER_TICK, LIGHT_SPEED_FM_PER_TICK,
-  NP_CAPTURE_GAMMA_EV, NUCLEON_SPACING_FM, NUCLEUS_CLUSTER_FM, STEP_TICKS, THERMAL_NEUTRON_FM_PER_FS,
+  CAPTURE_DISTANCE_FM, DEFAULT_PLAYBACK_SPEED, DEFAULT_SCENE_EXTENT_FM, ELECTRON_REST_ENERGY_EV, FS_PER_TICK,
+  LIGHT_SPEED_FM_PER_TICK, NP_CAPTURE_GAMMA_EV, NUCLEON_SPACING_FM, NUCLEUS_CLUSTER_FM, SPEED_OF_LIGHT,
+  SPEED_OF_LIGHT_FM_PER_FS, STEP_TICKS, THERMAL_NEUTRON_FM_PER_FS, THERMAL_NEUTRON_SPEED_M_S,
 } from '../../shared/constants';
 import { ParticleManager } from '../particles/ParticleManager';
 import { orbitalRadius } from '../particles/OrbitalMesh';
-import { findTransition } from './transitions';
-import { RealTime, realTime } from './time';
+import { findTransition, ionizationKineticEnergy } from './transitions';
+import { RealTime, realTime, ticksAtRealTime } from './time';
 
 const EXIT_MARGIN_TICKS = 1;
 export const NEUTRON_APPROACH_LABEL = 'thermal neutron approach (2,200 m/s)';
+export const ELECTRON_DEPARTURE_LABEL = 'freed electron leaving';
+// A freed electron's departure is fast-forwarded so it appears to move at this fraction of c.
+const DEPARTURE_DRAWN_SPEED = 0.5;
+
+/** Speed (fraction of c) of an electron with kinetic energy T: γ = 1 + T/mc², β = √(1 - 1/γ²). */
+export function electronSpeed(kineticEv: number): number {
+  const gamma = 1 + kineticEv / ELECTRON_REST_ENERGY_EV;
+  return Math.sqrt(1 - 1 / (gamma * gamma));
+}
+
+type Hit = { time: number; photonId: string; electronId: string } & (
+  { kind: 'absorb'; targetOrbital: OrbitalState } | { kind: 'ionize'; kineticEv: number }
+);
 
 type ScenarioParticle = Partial<ParticleData> & { type: ParticleType };
 
@@ -34,7 +48,7 @@ export class SimulationEngine {
   private lastDepartureTime = -Infinity; // latest time removeDeparted removed a particle
   private motions: Map<string, Motion> = new Map();
   private interactiveIds: Set<string> = new Set();
-  private approachSpans: Map<string, TimeCompression> = new Map(); // sandbox neutron id -> its fast-forward
+  private fastForwards: Map<string, TimeCompression> = new Map(); // sandbox particle id -> its fast-forward span
   private particleManager: ParticleManager;
   private onEvent?: (event: ScenarioEvent, particleIds: string[]) => void;
   private onLoad?: () => void;
@@ -60,7 +74,7 @@ export class SimulationEngine {
     this.compressions = compressions.map(c => ({ ...c })); // sandbox approaches are added to this list
     this.extent = extent;
     this.interactiveIds.clear();
-    this.approachSpans.clear();
+    this.fastForwards.clear();
     this.rebuild();
     this.advanceTo(0);
     this.onLoad?.();
@@ -77,6 +91,25 @@ export class SimulationEngine {
 
   getRealTime(): RealTime {
     return realTime(this.state.time, FS_PER_TICK, this.compressions);
+  }
+
+  // Positions follow real time: a particle at speed v has moved v·Δt, where Δt includes any fast-forwarded
+  // spans. So inside a compressed span everything moves at its real speed, just shown faster.
+  private fsAt(ticks: number): number {
+    return realTime(ticks, FS_PER_TICK, this.compressions).fs;
+  }
+
+  private ticksAt(fs: number): number {
+    return ticksAtRealTime(fs, FS_PER_TICK, this.compressions);
+  }
+
+  private distanceAt(m: Motion, ticks: number): number {
+    return m.speed * SPEED_OF_LIGHT_FM_PER_FS * (this.fsAt(ticks) - this.fsAt(m.spawnTime));
+  }
+
+  /** The tick at which a particle spawned at `spawnTime` with `speed` has travelled `s` fm. */
+  private ticksAtDistance(spawnTime: number, speed: number, s: number): number {
+    return this.ticksAt(this.fsAt(spawnTime) + s / (speed * SPEED_OF_LIGHT_FM_PER_FS));
   }
 
   setOnEvent(cb: (event: ScenarioEvent, particleIds: string[]) => void): void {
@@ -155,7 +188,9 @@ export class SimulationEngine {
     let end = limit / LIGHT_SPEED_FM_PER_TICK;
     const removedAt = new Map<string, number>();
     for (const e of this.events) {
-      const id = e.action === 'remove' ? e.targetId : e.action === 'absorb' ? e.photonId : e.action === 'capture' ? e.neutronId : undefined;
+      const id = e.action === 'remove' ? e.targetId
+        : e.action === 'absorb' || e.action === 'ionize' ? e.photonId
+        : e.action === 'capture' ? e.neutronId : undefined;
       if (id && !removedAt.has(id)) removedAt.set(id, e.time);
     }
     const consider = (p: ScenarioParticle | undefined, spawnTime: number) => {
@@ -166,14 +201,14 @@ export class SimulationEngine {
       const b = pos.x * d.x + pos.y * d.y + pos.z * d.z;
       const disc = b * b - (pos.x * pos.x + pos.y * pos.y + pos.z * pos.z - limit * limit);
       const s = disc >= 0 ? -b + Math.sqrt(disc) : Math.max(0, -b);
-      const exit = spawnTime + s / (LIGHT_SPEED_FM_PER_TICK * (p.speed ?? 1)) + EXIT_MARGIN_TICKS;
+      const exit = this.ticksAtDistance(spawnTime, p.speed ?? 1, s) + EXIT_MARGIN_TICKS;
       const removed = p.id === undefined ? undefined : removedAt.get(p.id);
       end = Math.max(end, Math.min(exit, removed ?? Infinity));
     };
     this.initialParticles.forEach(p => consider(p, 0));
     for (const e of this.events) {
       end = Math.max(end, e.time);
-      if (e.action === 'spawn' || e.action === 'emit' || e.action === 'capture') consider(e.particle, e.time);
+      if (e.action === 'spawn' || e.action === 'emit' || e.action === 'capture' || e.action === 'ionize') consider(e.particle, e.time);
     }
     return end;
   }
@@ -254,10 +289,11 @@ export class SimulationEngine {
     const neutron: ScenarioParticle = { type: 'neutron', id, position: { ...position } };
     if (travel > 0) {
       neutron.direction = normalize(toward);
-      // Drawn moving one light-tick per tick inside a span that stands for the real thermal travel time.
+      neutron.speed = THERMAL_NEUTRON_SPEED_M_S / SPEED_OF_LIGHT;
+      // The approach takes as many ticks as light would need, inside a span that stands for its real time.
       const span = { start: t, end: arrival, realFs: travel / THERMAL_NEUTRON_FM_PER_FS, label: NEUTRON_APPROACH_LABEL };
       this.compressions.push(span);
-      this.approachSpans.set(id, span);
+      this.fastForwards.set(id, span);
     }
     this.insertEvent({ time: t, action: 'spawn', particle: neutron });
     this.insertSorted({
@@ -281,7 +317,7 @@ export class SimulationEngine {
   removeUserParticle(id: string): void {
     if (!this.particleManager.getParticle(id)) return;
     // Deleting a neutron mid-approach ends its fast-forward there, keeping the same real speed.
-    const span = this.approachSpans.get(id);
+    const span = this.fastForwards.get(id);
     const t = this.state.time;
     if (span && t < span.end) {
       if (t <= span.start) this.compressions.splice(this.compressions.indexOf(span), 1);
@@ -289,7 +325,7 @@ export class SimulationEngine {
         span.realFs *= (t - span.start) / (span.end - span.start);
         span.end = t;
       }
-      this.approachSpans.delete(id);
+      this.fastForwards.delete(id);
     }
     this.insertEvent({ time: t, action: 'remove', targetId: id });
     this.advanceTo(this.state.time);
@@ -328,13 +364,9 @@ export class SimulationEngine {
       const hit = this.nextAbsorption(this.state.time, Math.min(time, nextEventTime));
       if (hit) {
         this.moveTo(hit.time);
-        this.insertEvent({
-          time: hit.time,
-          action: 'absorb',
-          photonId: hit.photonId,
-          electronId: hit.electronId,
-          targetOrbital: hit.targetOrbital,
-        });
+        this.insertEvent(hit.kind === 'absorb'
+          ? { time: hit.time, action: 'absorb', photonId: hit.photonId, electronId: hit.electronId, targetOrbital: hit.targetOrbital }
+          : this.ionizeEvent(hit));
         this.processEvent(this.events[this.nextEventIndex++]);
         continue;
       }
@@ -352,7 +384,7 @@ export class SimulationEngine {
   private moveTo(time: number): void {
     this.state.time = time;
     for (const [id, m] of this.motions) {
-      const d = (time - m.spawnTime) * LIGHT_SPEED_FM_PER_TICK * m.speed;
+      const d = this.distanceAt(m, time);
       this.particleManager.updatePosition(id, {
         x: m.origin.x + m.direction.x * d,
         y: m.origin.y + m.direction.y * d,
@@ -376,27 +408,27 @@ export class SimulationEngine {
     }
   }
 
-  // User-placed photons are absorbed when they enter an electron cloud with matching energy.
+  // User-placed photons that reach an electron cloud are absorbed when their energy matches a transition,
+  // or ionize the atom when it exceeds the binding energy (hydrogen-like electrons, Z = 1, only).
   // Returns the earliest such crossing in [from, to], solved exactly from the straight-line motion.
-  private nextAbsorption(
-    from: number,
-    to: number,
-  ): { time: number; photonId: string; electronId: string; targetOrbital: OrbitalState } | null {
+  private nextAbsorption(from: number, to: number): Hit | null {
     const electrons = this.particleManager.getAllParticles().filter(p => p.type === 'electron' && p.orbital);
-    let best: { time: number; photonId: string; electronId: string; targetOrbital: OrbitalState } | null = null;
+    let best: Hit | null = null;
 
     for (const [id, m] of this.motions) {
       if (!this.interactiveIds.has(id)) continue;
       const photon = this.particleManager.getParticle(id)?.data;
       if (!photon || photon.type !== 'photon' || photon.energy === undefined) continue;
-      if (this.events.some(e => e.action === 'absorb' && e.photonId === id)) continue;
+      if (this.events.some(e => (e.action === 'absorb' || e.action === 'ionize') && e.photonId === id)) continue;
 
-      const fmPerTick = LIGHT_SPEED_FM_PER_TICK * m.speed;
-      const sNow = (from - m.spawnTime) * fmPerTick; // distance travelled at `from`
+      const sNow = this.distanceAt(m, from); // distance travelled at `from`
       for (const electron of electrons) {
-        const target = findTransition(electron.orbital!, photon.energy);
-        if (!target) continue;
-        const R = orbitalRadius(electron.orbital!, electron.effectiveCharge);
+        const orbital = electron.orbital!;
+        const target = findTransition(orbital, photon.energy);
+        const kinetic = target || (electron.effectiveCharge ?? 1) !== 1 ? null : ionizationKineticEnergy(photon.energy, orbital.n);
+        const ionizes = kinetic !== null;
+        if (!target && !ionizes) continue;
+        const R = orbitalRadius(orbital, electron.effectiveCharge);
         // |w + u·s| = R with w = origin - centre, u = unit direction: s² + 2(u·w)s + |w|² - R² = 0
         const w = {
           x: m.origin.x - electron.position.x,
@@ -412,15 +444,50 @@ export class SimulationEngine {
           const disc = b * b - c;
           if (disc >= 0) {
             const sEnter = -b - Math.sqrt(disc);
-            if (sEnter >= sNow) t = m.spawnTime + sEnter / fmPerTick;
+            if (sEnter >= sNow) t = this.ticksAtDistance(m.spawnTime, m.speed, sEnter);
           }
         }
         if (t !== null && t <= to && (!best || t < best.time)) {
-          best = { time: t, photonId: id, electronId: electron.id, targetOrbital: target };
+          best = target
+            ? { time: t, photonId: id, electronId: electron.id, kind: 'absorb', targetOrbital: target }
+            : { time: t, photonId: id, electronId: electron.id, kind: 'ionize', kineticEv: kinetic! };
         }
       }
     }
     return best;
+  }
+
+  /**
+   * A sandbox ionization: the electron leaves perpendicular to the photon's path (along the light's
+   * polarization, its most likely direction) at a random angle around it, chosen once. Its slow departure
+   * becomes a fast-forwarded span unless another span overlaps it.
+   */
+  private ionizeEvent(hit: Hit & { kind: 'ionize' }): ScenarioEvent {
+    const electron = this.particleManager.getParticle(hit.electronId)!.data;
+    const along = this.motions.get(hit.photonId)!.direction;
+    let dir = randomDirection();
+    const dot = dir.x * along.x + dir.y * along.y + dir.z * along.z;
+    dir = normalize({ x: dir.x - dot * along.x, y: dir.y - dot * along.y, z: dir.z - dot * along.z });
+    const speed = electronSpeed(hit.kineticEv);
+
+    // Distance from the atom to where the electron leaves the scene (|pos + s·dir| = 2 × extent).
+    const limit = 2 * this.extent;
+    const p = electron.position;
+    const b = p.x * dir.x + p.y * dir.y + p.z * dir.z;
+    const exitS = -b + Math.sqrt(Math.max(0, b * b - (p.x * p.x + p.y * p.y + p.z * p.z - limit * limit)));
+    const end = hit.time + exitS / (LIGHT_SPEED_FM_PER_TICK * DEPARTURE_DRAWN_SPEED);
+    if (exitS > 0 && !this.compressions.some(c => c.start < end && hit.time < c.end)) {
+      const span = { start: hit.time, end, realFs: exitS / (speed * SPEED_OF_LIGHT_FM_PER_FS), label: ELECTRON_DEPARTURE_LABEL };
+      this.compressions.push(span);
+      this.fastForwards.set(hit.electronId, span);
+    }
+    return {
+      time: hit.time,
+      action: 'ionize',
+      photonId: hit.photonId,
+      electronId: hit.electronId,
+      particle: { type: 'electron', id: hit.electronId, position: { ...p }, direction: dir, speed, energy: hit.kineticEv },
+    };
   }
 
   // Pending events are all later than the playhead, so the current time slots in next.
@@ -492,6 +559,19 @@ export class SimulationEngine {
           this.particleManager.updatePosition(event.targetId, event.position);
           ids.push(event.targetId);
         }
+        break;
+      }
+      case 'ionize': {
+        const electron = event.electronId ? this.particleManager.getParticle(event.electronId)?.data : undefined;
+        if (!electron || !event.particle) break;
+        if (event.photonId && this.particleManager.getParticle(event.photonId)) {
+          this.remove(event.photonId);
+          ids.push(event.photonId);
+        }
+        // The bound electron (its cloud) is replaced by a free one leaving from where the atom is.
+        const from = { ...electron.position };
+        this.remove(electron.id);
+        ids.push(this.spawn({ ...event.particle, type: 'electron', id: electron.id, position: from, orbital: undefined }, event.time).id);
         break;
       }
       case 'capture': {

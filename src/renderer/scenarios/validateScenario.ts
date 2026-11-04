@@ -2,7 +2,8 @@
 // Replays the event list and reports anything the engine would show that contradicts the physics.
 import { OrbitalState, ParticleData, ParticleType, Scenario } from '../../shared/types';
 import { ABSORPTION_TOLERANCE_EV, CAPTURE_GAMMA_TOLERANCE_EV, NP_CAPTURE_GAMMA_EV } from '../../shared/constants';
-import { energyLevel } from '../physics/transitions';
+import { electronSpeed } from '../physics/SimulationEngine';
+import { energyLevel, ionizationKineticEnergy } from '../physics/transitions';
 
 const MAX_RENDERED_N = 4;
 const MAX_RENDERED_L = 1;
@@ -15,6 +16,7 @@ interface Alive {
   energy?: number;
   moving?: boolean;
   bound?: boolean; // a nucleon already in a nucleus (after a capture)
+  effectiveCharge?: number;
 }
 
 const fmt = (o: OrbitalState) => `${o.n}${'spdf'[o.l] ?? '?'}`;
@@ -22,7 +24,6 @@ const fmt = (o: OrbitalState) => `${o.n}${'spdf'[o.l] ?? '?'}`;
 export function checkScenarioPhysics(s: Scenario): string[] {
   const problems: string[] = [];
   const compressions = [...(s.compressions ?? [])].sort((a, b) => a.start - b.start);
-  const inCompression = (t: number) => compressions.some(c => t >= c.start && t < c.end);
 
   for (let i = 1; i < compressions.length; i++) {
     if (compressions[i].start < compressions[i - 1].end) problems.push(`compressions overlap at tick ${compressions[i].start}`);
@@ -40,8 +41,8 @@ export function checkScenarioPhysics(s: Scenario): string[] {
       if (!allowed.includes(p.spin)) problems.push(`${where}: a ${p.type}'s spin projection must be ${allowed.join(' or ')}`);
     }
     if (p.type === 'photon' && p.speed !== undefined && p.speed !== 1) problems.push(`${where}: photons move at c`);
-    if (p.type !== 'photon' && p.direction && (p.speed ?? 1) >= 1 && !inCompression(time)) {
-      problems.push(`${where}: a ${p.type} cannot move at c; set speed < 1 or put its motion in a compressed span`);
+    if (p.type !== 'photon' && p.direction && (p.speed === undefined || p.speed >= 1)) {
+      problems.push(`${where}: a ${p.type} cannot move at c; give it a speed below 1 (fraction of c)`);
     }
   };
 
@@ -49,7 +50,7 @@ export function checkScenarioPhysics(s: Scenario): string[] {
   s.particles.forEach((p, i) => {
     const id = p.id ?? `s${i}`;
     checkParticle(p, 0, `particle ${id}`);
-    alive.set(id, { type: p.type, orbital: p.orbital, energy: p.energy, moving: !!p.direction });
+    alive.set(id, { type: p.type, orbital: p.orbital, energy: p.energy, moving: !!p.direction, effectiveCharge: p.effectiveCharge });
   });
 
   const events = [...s.events].sort((a, b) => a.time - b.time);
@@ -84,6 +85,32 @@ export function checkScenarioPhysics(s: Scenario): string[] {
         problems.push(...checkTransition(where, electron.orbital, e.targetOrbital, photon.energy, 'absorb'));
         electron.orbital = e.targetOrbital;
         alive.delete(e.photonId!);
+        break;
+      }
+      case 'ionize': {
+        const photon = e.photonId ? alive.get(e.photonId) : undefined;
+        const electron = e.electronId ? alive.get(e.electronId) : undefined;
+        if (!photon || photon.type !== 'photon') { problems.push(`${where}: no photon ${e.photonId}`); break; }
+        if (!electron?.orbital) { problems.push(`${where}: no bound electron ${e.electronId}`); break; }
+        if (!e.particle) break;
+        if (e.particle.type !== 'electron') problems.push(`${where}: ionization frees an electron`);
+        if ((electron.effectiveCharge ?? 1) !== 1) problems.push(`${where}: ionization energies are only checked for hydrogen (Z = 1)`);
+        const E = photon.energy ?? 0;
+        const expected = ionizationKineticEnergy(E, electron.orbital.n);
+        if (expected === null) {
+          problems.push(`${where}: photon energy ${E} eV is below the ${fmt(electron.orbital)} binding energy (${(-energyLevel(electron.orbital.n)).toFixed(3)} eV)`);
+        } else {
+          const T = e.particle.energy;
+          if (T === undefined || Math.abs(T - expected) > 1e-3) {
+            problems.push(`${where}: electron kinetic energy ${T} eV should be ${expected.toFixed(4)} eV (photon minus binding energy, less the proton's recoil share)`);
+          } else if (e.particle.speed === undefined || Math.abs(e.particle.speed - electronSpeed(T)) > 1e-3 * electronSpeed(T)) {
+            problems.push(`${where}: electron speed ${e.particle.speed} c does not match ${T} eV (${electronSpeed(T).toPrecision(5)} c)`);
+          }
+        }
+        checkParticle(e.particle, e.time, where);
+        alive.delete(e.photonId!);
+        electron.orbital = undefined;
+        electron.moving = true;
         break;
       }
       case 'capture': {

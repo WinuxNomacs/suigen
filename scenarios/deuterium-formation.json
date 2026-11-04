@@ -56,7 +56,8 @@
         "x": -1,
         "y": 0,
         "z": 0
-      }
+      },
+      "speed": 7.3384100944e-06
     }
   ],
   "events": [
@@ -85,7 +86,7 @@
     {
       "start": 0,
       "end": 120,
-      "realFs": 272.73,
+      "realFs": 272.7272727,
       "label": "thermal neutron approach (2,200 m/s)"
     }
   ],

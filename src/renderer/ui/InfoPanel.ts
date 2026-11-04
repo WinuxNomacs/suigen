@@ -2,6 +2,7 @@ import { ParticleData, Scenario } from '../../shared/types';
 import { getPresets, loadPreset } from '../scenarios/ScenarioLoader';
 import { SimulationEngine } from '../physics/SimulationEngine';
 import { formatEnergy } from '../particles/ParticleLabels';
+import { SPEED_OF_LIGHT } from '../../shared/constants';
 import { Child, h } from './dom';
 import { Tutorial, tutorialSeen } from './Tutorial';
 
@@ -25,13 +26,20 @@ const SANDBOX_SIMPLIFICATIONS = [
   'The Pauli principle is not enforced: any number of placed electrons share the 1s cloud, where only two fit.',
   'Deleting a proton leaves its electron clouds in place; nothing frees the electrons.',
   'A photon is absorbed as it enters the cloud\u2019s 90% surface. Real absorption has no single point of impact.',
-  'Ionization is not modeled: a real photon above 13.6 eV can knock the electron out of the atom.',
+  'A photon above the binding energy (13.6 eV from 1s) that reaches a cloud frees the electron. It leaves perpendicular to the photon\u2019s path, at a random angle around it (the most likely direction for polarized light, chosen once), and its slow departure is fast-forwarded. The proton\u2019s small recoil is not drawn.',
   'A placed neutron heads for the nearest free proton (no other proton or neutron within 20 fm) at 2,200 m/s, the speed of a room-temperature neutron. Its approach is fast-forwarded. Only one neutron approaches at a time; one placed during another approach, or with no free proton, stays where it is placed.',
   'Capture is certain here. A real slow neutron meeting a free proton is about 60 times more likely to bounce off (scattering, 20.5 barn) than to be captured (0.333 barn; NIST neutron data).',
   'Only a free proton captures a neutron; heavier captures such as n + d \u2192 tritium are real but not modeled. A neutron whose proton was moved away before it arrived stops where its approach ended.',
   'The capture gamma ray (2.22 MeV) leaves in a random direction, chosen once so rewinding replays it the same way.',
 ];
 
+
+/** Speed as a fraction of c for fast particles, in km/s or m/s for slow ones. */
+export function speedText(v: number): string {
+  if (v >= 0.01) return `speed: ${+v.toPrecision(3)} c`;
+  const ms = v * SPEED_OF_LIGHT;
+  return ms >= 1e4 ? `speed: ${+(ms / 1e3).toPrecision(4)} km/s (${+v.toPrecision(3)} c)` : `speed: ${+ms.toPrecision(4)} m/s`;
+}
 
 /** Intrinsic spin from the particle type, plus the projection m_s when the scenario sets it. */
 export function spinText(p: Pick<ParticleData, 'type' | 'spin'>): string {
@@ -146,7 +154,7 @@ export class InfoPanel {
         tutorialArea,
         h('p', { class: 'hint' }, 'Select a particle type from the toolbar, then click in the viewport to place it.'),
         h('p', { class: 'hint' }, 'Electrons settle around the nearest proton. Photons fly toward the nearest electron with the energy chosen under the \u03b3 button. Neutrons head for the nearest free proton and bind to it, releasing a gamma ray.'),
-        h('p', { class: 'hint' }, 'An electron absorbs a photon only if its energy matches a jump to a higher orbital (10.2 eV takes 1s to 2p). Otherwise the photon passes straight through.'),
+        h('p', { class: 'hint' }, 'An electron absorbs a photon only if its energy matches a jump to a higher orbital (10.2 eV takes 1s to 2p). A photon with more than the binding energy (13.6 eV from 1s; try 21.2 eV) frees the electron instead. Otherwise the photon passes straight through.'),
         simplifications(SANDBOX_SIMPLIFICATIONS),
       );
       return;
@@ -222,7 +230,7 @@ export class InfoPanel {
       line(spinText(p)),
       p.orbital && line(`orbital: n=${p.orbital.n}, l=${p.orbital.l}, m=${p.orbital.m}`),
       p.energy !== undefined && line(`energy: ${formatEnergy(p.energy)}`),
-      p.speed !== undefined && line(`speed: ${p.speed} c`),
+      p.speed !== undefined && line(speedText(p.speed)),
       del,
       h('p', { class: 'hint' }, 'Drag a marker to move it (a nucleus moves with its electron clouds). Esc clears the selection.'),
     );

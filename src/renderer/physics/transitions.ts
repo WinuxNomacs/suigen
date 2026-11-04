@@ -1,5 +1,5 @@
 import { OrbitalState } from '../../shared/types';
-import { HYDROGEN_BINDING_EV, ABSORPTION_TOLERANCE_EV } from '../../shared/constants';
+import { HYDROGEN_BINDING_EV, ABSORPTION_TOLERANCE_EV, ELECTRON_MASS, PROTON_MASS } from '../../shared/constants';
 
 const MAX_N = 4;
 const MAX_RENDERED_L = 1; // only s and p shapes exist
@@ -22,4 +22,14 @@ export function findTransition(orbital: OrbitalState, energyEv: number): Orbital
     }
   }
   return null;
+}
+
+/**
+ * Kinetic energy of the electron freed from level n by a photon, or null below the threshold.
+ * The excess E - |E_n| is shared by the electron and the recoiling proton in inverse proportion to their
+ * masses (equal and opposite momenta): the electron gets m_p / (m_p + m_e) of it.
+ */
+export function ionizationKineticEnergy(photonEv: number, n: number): number | null {
+  const excess = photonEv + energyLevel(n);
+  return excess > 0 ? (excess * PROTON_MASS) / (PROTON_MASS + ELECTRON_MASS) : null;
 }

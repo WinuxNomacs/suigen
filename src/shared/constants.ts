@@ -17,6 +17,7 @@ export const RYDBERG_ENERGY_EV = 13.60569312299;
 const mc2Ev = (kg: number) => (kg * SPEED_OF_LIGHT ** 2) / EV_TO_JOULES;
 // Neutron capture by a free proton at rest, n + p → d + γ: the gamma ray carries
 // E = (M² - m_d²) / 2M with M = m_p + m_n (binding energy 2.2246 MeV minus the deuteron's 1.3 keV recoil).
+export const ELECTRON_REST_ENERGY_EV = mc2Ev(ELECTRON_MASS); // 510,998.95 eV
 export const NP_CAPTURE_GAMMA_EV = (() => {
   const M = mc2Ev(PROTON_MASS) + mc2Ev(NEUTRON_MASS);
   const md = mc2Ev(DEUTERON_MASS);

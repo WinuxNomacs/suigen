@@ -35,6 +35,22 @@ export function realTime(ticks: number, fsPerTick: number, compressions: TimeCom
   return { fs, approximate };
 }
 
+/** Inverse of realTime: the tick at which `fs` femtoseconds of real time have passed. */
+export function ticksAtRealTime(fs: number, fsPerTick: number, compressions: TimeCompression[]): number {
+  const sorted = [...compressions].sort((a, b) => a.start - b.start);
+  let cursorTicks = 0;
+  let cursorFs = 0;
+  for (const c of sorted) {
+    const gapFs = (c.start - cursorTicks) * fsPerTick;
+    if (fs <= cursorFs + gapFs) return cursorTicks + (fs - cursorFs) / fsPerTick;
+    cursorFs += gapFs;
+    if (fs <= cursorFs + c.realFs) return c.start + ((fs - cursorFs) / c.realFs) * (c.end - c.start);
+    cursorFs += c.realFs;
+    cursorTicks = c.end;
+  }
+  return cursorTicks + (fs - cursorFs) / fsPerTick;
+}
+
 const UNITS: Array<[string, number]> = [
   ['ns', 1e6],
   ['ps', 1e3],

@@ -31,7 +31,7 @@ export interface ParticleData {
 
 export interface ScenarioEvent {
   time: number;
-  action: 'spawn' | 'absorb' | 'emit' | 'remove' | 'move' | 'capture';
+  action: 'spawn' | 'absorb' | 'emit' | 'remove' | 'move' | 'capture' | 'ionize';
   particle?: Partial<ParticleData> & { type: ParticleType };
   photonId?: string;
   electronId?: string;

@@ -8,11 +8,13 @@ import photonEmission from '../../../scenarios/photon-emission.json';
 import heliumAtom from '../../../scenarios/helium-atom.json';
 import comptonScattering from '../../../scenarios/compton-scattering.json';
 import deuteriumFormation from '../../../scenarios/deuterium-formation.json';
+import hydrogenIonization from '../../../scenarios/hydrogen-ionization.json';
 
 export const RAW_PRESETS: Record<string, unknown> = {
   'hydrogen-ground-state': hydrogenGroundState,
   'photon-absorption': photonAbsorption,
   'photon-emission': photonEmission,
+  'hydrogen-ionization': hydrogenIonization,
   'helium-atom': heliumAtom,
   'compton-scattering': comptonScattering,
   'deuterium-formation': deuteriumFormation,

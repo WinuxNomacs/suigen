@@ -5,7 +5,8 @@ import { ScenarioSchema } from '../../shared/scenarioSchema';
 import {
   DEUTERON_MASS, ELECTRON_MASS, EV_TO_JOULES, FINE_STRUCTURE, HBAR, NEUTRON_MASS, PROTON_MASS, SPEED_OF_LIGHT,
 } from '../../shared/constants';
-import { energyLevel } from '../physics/transitions';
+import { energyLevel, ionizationKineticEnergy } from '../physics/transitions';
+import { electronSpeed } from '../physics/SimulationEngine';
 import { orbitalRadius } from '../particles/OrbitalMesh';
 
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
@@ -68,6 +69,19 @@ describe('scenario validation catches mistakes', () => {
     expect(problemsOf(s).join()).toMatch(/spin projection must be 0.5 or -0.5/);
   });
 
+  it('an ionization below threshold or with the wrong electron energy or speed', () => {
+    const base = () => clone(RAW_PRESETS['hydrogen-ionization']) as { events: Array<Record<string, any>> }; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const low = base();
+    low.events[0].particle.energy = 12;
+    expect(problemsOf(low).join()).toMatch(/below the 1s binding energy \(13\.598 eV\)/);
+    const wrongT = base();
+    wrongT.events[1].particle.energy = 7.6197; // ignores the proton's recoil share
+    expect(problemsOf(wrongT).join()).toMatch(/should be 7\.6156 eV/);
+    const wrongV = base();
+    wrongV.events[1].particle.speed = 0.006;
+    expect(problemsOf(wrongV).join()).toMatch(/does not match 7\.615601 eV/);
+  });
+
   it('a capture with the wrong gamma energy or a bound proton', () => {
     const s = clone(RAW_PRESETS['deuterium-formation']) as { events: Array<Record<string, unknown>> };
     (s.events[0].particle as Record<string, unknown>).energy = 2224566; // binding energy, ignoring the recoil
@@ -78,9 +92,9 @@ describe('scenario validation catches mistakes', () => {
     expect(problemsOf(twice).join()).toMatch(/only a free neutron and a free proton/);
   });
 
-  it('a massive particle moving at c outside a compressed span', () => {
-    const s = clone(RAW_PRESETS['deuterium-formation']) as Record<string, unknown>;
-    delete s.compressions;
+  it('a massive particle moving at c', () => {
+    const s = clone(RAW_PRESETS['deuterium-formation']) as { particles: Array<Record<string, unknown>> };
+    delete s.particles[1].speed;
     expect(problemsOf(s).join()).toMatch(/neutron cannot move at c/);
   });
 });
@@ -148,6 +162,43 @@ describe('numbers in scenario text', () => {
     const s = loadPreset('deuterium-formation')!;
     const photon = s.events.map(e => e.particle).find(p => p?.type === 'photon')!;
     expect(Math.abs(photon.energy! - (M * M - md * md) / (2 * M))).toBeLessThan(2);
+  });
+});
+
+describe('hydrogen ionization scenario numbers', () => {
+  const s = loadPreset('hydrogen-ionization')!;
+  const photon = s.events[0].particle!;
+  const electron = s.events.find(e => e.action === 'ionize')!.particle!;
+  const T = ionizationKineticEnergy(photon.energy!, 1)!;
+  const v = electronSpeed(T);
+  const mpc2 = mc2Ev(PROTON_MASS);
+  const pe = Math.sqrt(T * T + 2 * T * mc2Ev(ELECTRON_MASS)); // electron momentum, eV/c
+  const t = text('hydrogen-ionization');
+
+  it('photon is the He I line, 58.4334 nm', () => {
+    expect(1239.84198433 / photon.energy!).toBeCloseTo(58.4334, 3);
+  });
+
+  it('electron energy and speed follow from the photon (proton recoil share included)', () => {
+    expect(electron.energy).toBeCloseTo(T, 5);
+    expect(electron.speed).toBeCloseTo(v, 8);
+    expect(t).toContain(`${T.toFixed(4)} eV`);
+    expect(t).toContain(`${(v * SPEED_OF_LIGHT / 1e3).toLocaleString('en-US', { maximumFractionDigits: 0 })} km/s`);
+    expect(t).toContain(`${(photon.energy! + energyLevel(1)).toFixed(4)} eV`); // shared excess
+  });
+
+  it('proton recoil numbers', () => {
+    expect(t).toContain(`${Math.round((pe / mpc2) * SPEED_OF_LIGHT)} m/s`);
+    expect(t).toContain(`${(photon.energy! + energyLevel(1) - T).toFixed(4)} eV`);
+    const recoilFm = (pe / mpc2) * SPEED_OF_LIGHT * s.compressions![0].realFs; // m/s × fs = fm
+    expect(Math.abs(recoilFm - 270)).toBeLessThan(5);
+    expect(t).toContain('about 270 fm');
+  });
+
+  it('the fast-forward stands for the electron crossing twice the extent at its real speed', () => {
+    const c = s.compressions![0];
+    expect(c.realFs).toBeCloseTo((2 * s.extent!) / (v * SPEED_OF_LIGHT), 6); // 1 m/s = 1 fm/fs
+    expect(t).toContain(`${c.realFs.toFixed(2)} fs`);
   });
 });
 
