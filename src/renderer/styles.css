@@ -301,6 +301,18 @@ body {
 
 #timeline label { color: #888; font-size: 12px; }
 #scrubber { flex: 1; min-width: 80px; accent-color: #4488ff; cursor: pointer; }
+/* Speed slider with clickable stop labels underneath, centred under the thumb positions. */
+.speed-control { position: relative; width: 240px; padding-bottom: 12px; }
+#speed { width: 100%; margin: 0; accent-color: #4488ff; cursor: pointer; }
+.speed-stops { position: absolute; left: 8px; right: 8px; bottom: -2px; height: 12px; }
+#timeline .speed-stops button {
+  position: absolute; transform: translateX(-50%);
+  background: none; border: none; padding: 0 2px;
+  color: #777; font-size: 10px; line-height: 12px; font-family: monospace;
+}
+#timeline .speed-stops button:hover { background: none; color: #ccc; }
+#timeline .speed-stops button.active { color: #4488ff; }
+#timeline #speed-value { min-width: 6ch; padding: 4px 6px; font-family: monospace; font-size: 13px; }
 #time-display { font-family: monospace; font-size: 13px; min-width: 16ch; }
 
 /* CSS2D Labels */

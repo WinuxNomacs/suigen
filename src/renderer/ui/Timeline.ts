@@ -1,5 +1,6 @@
 import { SimulationEngine } from '../physics/SimulationEngine';
 import { formatDuration } from '../physics/time';
+import { SPEED_POSITION_MAX, SPEED_STOPS, formatSpeed, positionToSpeed, speedToPosition } from './speed';
 
 const PLAY = '▶';
 const PAUSE = '⏸';
@@ -9,6 +10,7 @@ export class Timeline {
   private btnPlay: HTMLButtonElement;
   private timeDisplay: HTMLSpanElement;
   private speedInput: HTMLInputElement;
+  private speedValue: HTMLButtonElement;
   private scrubber: HTMLInputElement;
   private scrubbing = false;
   private resumeAfterScrub = false;
@@ -25,9 +27,25 @@ export class Timeline {
     document.getElementById('btn-step-back')!.addEventListener('click', () => engine.stepBack());
     document.getElementById('btn-step-fwd')!.addEventListener('click', () => engine.stepForward());
 
-    this.speedInput.addEventListener('input', () => {
-      engine.setSpeed(parseFloat(this.speedInput.value));
+    this.speedValue = document.getElementById('speed-value') as HTMLButtonElement;
+    const stops = SPEED_STOPS.map(speed => {
+      const b = document.createElement('button');
+      b.textContent = speed === 0 ? '0' : formatSpeed(speed);
+      b.title = `Set speed to ${formatSpeed(speed)}`;
+      b.style.left = `${(speedToPosition(speed) / SPEED_POSITION_MAX) * 100}%`;
+      b.addEventListener('click', () => applySpeed(speed));
+      return b;
     });
+    document.getElementById('speed-stops')!.replaceChildren(...stops);
+    const applySpeed = (speed: number) => {
+      engine.setSpeed(speed);
+      this.speedInput.value = String(speedToPosition(speed));
+      this.speedValue.textContent = formatSpeed(speed);
+      stops.forEach((b, i) => b.classList.toggle('active', SPEED_STOPS[i] === speed));
+    };
+    this.speedInput.addEventListener('input', () => applySpeed(positionToSpeed(Number(this.speedInput.value))));
+    this.speedValue.addEventListener('click', () => applySpeed(1));
+    applySpeed(engine.state.speed);
 
     // Dragging the scrubber pauses playback and resumes it on release.
     this.scrubber.addEventListener('pointerdown', () => {
@@ -39,7 +57,7 @@ export class Timeline {
     const endScrub = () => {
       if (!this.scrubbing) return;
       this.scrubbing = false;
-      if (this.resumeAfterScrub) engine.play();
+      if (this.resumeAfterScrub) engine.resume();
     };
     this.scrubber.addEventListener('pointerup', endScrub);
     this.scrubber.addEventListener('pointercancel', endScrub);

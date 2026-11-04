@@ -161,9 +161,9 @@ describe('SimulationEngine', () => {
       return engine.getDuration();
     };
     // Recoil electron from the origin at 0.2472c to 2 × 450,000 fm, starting at tick 120.
-    expect(load('compton-scattering')).toBeCloseTo(120 + 900000 / (5000 * 0.2472), 6);
+    expect(load('compton-scattering')).toBeCloseTo(120 + 900000 / (5000 * 0.2472) + 1, 6); // +1 tick margin
     // Emitted photon from the origin at c, starting at tick 150.
-    expect(load('photon-emission')).toBeCloseTo(150 + 900000 / 5000, 6);
+    expect(load('photon-emission')).toBeCloseTo(150 + 900000 / 5000 + 1, 6);
     // Nothing moves after the absorption: the floor is light leaving from the centre.
     expect(load('photon-absorption')).toBeCloseTo(900000 / 5000, 6);
   });
@@ -178,7 +178,7 @@ describe('SimulationEngine', () => {
       const atEnd = pm.snapshot();
       engine.seek(end * 3);
       expect(pm.snapshot()).toBe(atEnd);
-      engine.seek(end - 1);
+      engine.seek(end - 2); // the last exit is at end - 1 (EXIT_MARGIN_TICKS)
       expect(pm.snapshot()).not.toBe(atEnd);
     }
   });
@@ -194,5 +194,49 @@ describe('SimulationEngine', () => {
     expect(engine.state.time).toBe(0);
     expect(engine.state.playing).toBe(false);
     expect(pm.snapshot()).toBe(start);
+  });
+
+  it('playback pauses at the end and play starts over', () => {
+    const { pm, engine } = setup();
+    const s = loadPreset('photon-emission')!;
+    engine.loadScenario(s.particles, s.events, s.compressions, s.extent);
+    const start = pm.snapshot();
+    const end = engine.getDuration();
+    engine.play();
+    for (let i = 0; i < 100; i++) engine.tick(10);
+    expect(engine.state.time).toBe(end);
+    expect(engine.state.playing).toBe(false);
+    expect(pm.getAllParticles().some(p => p.type === 'photon')).toBe(false); // departed by the end
+    engine.play();
+    expect(engine.state.time).toBe(0);
+    expect(pm.snapshot()).toBe(start);
+  });
+
+  it('reverse playback matches seeking and stops at the start', () => {
+    const a = setup();
+    const b = setup();
+    const s = loadPreset('compton-scattering')!;
+    a.engine.loadScenario(s.particles, s.events, s.compressions, s.extent);
+    b.engine.loadScenario(s.particles, s.events, s.compressions, s.extent);
+    a.engine.seek(800);
+    a.engine.setSpeed(-2);
+    a.engine.play();
+    for (let i = 0; i < 175; i++) a.engine.tick(2); // 800 - 175 * 4 = 100: back across the scattering
+    b.engine.seek(100);
+    expect(a.pm.snapshot()).toBe(b.pm.snapshot());
+    for (let i = 0; i < 100; i++) a.engine.tick(2);
+    expect(a.engine.state.time).toBe(0);
+    expect(a.engine.state.playing).toBe(false);
+  });
+
+  it('speed 0 holds the scene still', () => {
+    const { engine } = setup();
+    const s = loadPreset('photon-absorption')!;
+    engine.loadScenario(s.particles, s.events, s.compressions, s.extent);
+    engine.seek(50);
+    engine.setSpeed(0);
+    engine.play();
+    engine.tick(100);
+    expect(engine.state.time).toBe(50);
   });
 });

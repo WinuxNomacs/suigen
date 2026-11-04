@@ -5,6 +5,8 @@ import { orbitalRadius } from '../particles/OrbitalMesh';
 import { findTransition } from './transitions';
 import { RealTime, realTime } from './time';
 
+const EXIT_MARGIN_TICKS = 1;
+
 type ScenarioParticle = Partial<ParticleData> & { type: ParticleType };
 
 interface Motion {
@@ -25,6 +27,7 @@ export class SimulationEngine {
   private compressions: TimeCompression[] = [];
   private extent = DEFAULT_SCENE_EXTENT_FM;
   private nextEventIndex = 0;
+  private lastDepartureTime = -Infinity; // latest time removeDeparted removed a particle
   private motions: Map<string, Motion> = new Map();
   private interactiveIds: Set<string> = new Set();
   private particleManager: ParticleManager;
@@ -73,21 +76,45 @@ export class SimulationEngine {
     this.onEvent = cb;
   }
 
-  play(): void { this.state.playing = true; }
+  /** Starts playback. At the end (or at the start when playing in reverse) it starts over from the other end. */
+  play(): void {
+    const end = this.getDuration();
+    if (this.state.speed > 0 && this.state.time >= end) this.seek(0);
+    else if (this.state.speed < 0 && this.state.time <= 0) this.seek(end);
+    this.state.playing = true;
+  }
+  /** Continues playback from where it is (after a scrub), without starting over. */
+  resume(): void { this.state.playing = true; }
   pause(): void { this.state.playing = false; }
-  togglePlay(): void { this.state.playing = !this.state.playing; }
+  togglePlay(): void {
+    if (this.state.playing) this.pause();
+    else this.play();
+  }
+  /** Playback speed; negative plays in reverse. */
   setSpeed(s: number): void { this.state.speed = s; }
 
   stepForward(): void {
-    this.advanceTo(this.state.time + STEP_TICKS);
+    this.seek(Math.min(this.state.time + STEP_TICKS, Math.max(this.getDuration(), this.state.time)));
   }
 
   stepBack(): void {
     this.seek(this.state.time - STEP_TICKS);
   }
 
+  /** Advances playback by `deltaTicks` at the current speed and pauses on reaching either end. */
   tick(deltaTicks: number): void {
-    this.advanceTo(this.state.time + deltaTicks * this.state.speed);
+    const dt = deltaTicks * this.state.speed;
+    if (dt === 0) return;
+    let target = this.state.time + dt;
+    const end = this.getDuration();
+    if (dt > 0 && target >= end) {
+      target = Math.max(end, this.state.time);
+      this.pause();
+    } else if (dt < 0 && target <= 0) {
+      target = 0;
+      this.pause();
+    }
+    this.seek(target);
   }
 
   /** Back to the start, paused. */
@@ -99,6 +126,7 @@ export class SimulationEngine {
   /**
    * Ticks until the scene stops changing: the last event, or the last moving particle leaving the
    * scene (removeDeparted), whichever is later. At least the time light takes to leave from the centre.
+   * Exits get one extra tick so a particle is past the boundary, and removed, when playback stops.
    */
   getDuration(): number {
     const limit = 2 * this.extent;
@@ -116,7 +144,7 @@ export class SimulationEngine {
       const b = pos.x * d.x + pos.y * d.y + pos.z * d.z;
       const disc = b * b - (pos.x * pos.x + pos.y * pos.y + pos.z * pos.z - limit * limit);
       const s = disc >= 0 ? -b + Math.sqrt(disc) : Math.max(0, -b);
-      const exit = spawnTime + s / (LIGHT_SPEED_FM_PER_TICK * (p.speed ?? 1));
+      const exit = spawnTime + s / (LIGHT_SPEED_FM_PER_TICK * (p.speed ?? 1)) + EXIT_MARGIN_TICKS;
       const removed = p.id === undefined ? undefined : removedAt.get(p.id);
       end = Math.max(end, Math.min(exit, removed ?? Infinity));
     };
@@ -130,7 +158,16 @@ export class SimulationEngine {
 
   seek(time: number): void {
     const target = Math.max(0, time);
-    if (target < this.state.time) this.rebuild();
+    if (target < this.state.time) {
+      // Going back without crossing an event or a departure only moves particles along their paths,
+      // so reverse playback doesn't rebuild the scene every frame.
+      const lastEventTime = this.nextEventIndex > 0 ? this.events[this.nextEventIndex - 1].time : -Infinity;
+      if (lastEventTime <= target && this.lastDepartureTime <= target) {
+        this.moveTo(target);
+        return;
+      }
+      this.rebuild();
+    }
     this.advanceTo(target);
   }
 
@@ -173,6 +210,7 @@ export class SimulationEngine {
     this.motions.clear();
     this.state.time = 0;
     this.nextEventIndex = 0;
+    this.lastDepartureTime = -Infinity;
     for (const p of this.initialParticles) {
       this.spawn(p, 0);
     }
@@ -227,7 +265,10 @@ export class SimulationEngine {
       const pos = this.particleManager.getParticle(id)?.data.position;
       if (!pos) continue;
       const outward = pos.x * m.direction.x + pos.y * m.direction.y + pos.z * m.direction.z > 0;
-      if (outward && Math.hypot(pos.x, pos.y, pos.z) > limit) this.remove(id);
+      if (outward && Math.hypot(pos.x, pos.y, pos.z) > limit) {
+        this.remove(id);
+        this.lastDepartureTime = Math.max(this.lastDepartureTime, this.state.time);
+      }
     }
   }
 

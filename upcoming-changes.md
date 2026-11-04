@@ -177,6 +177,14 @@ Requested 2026-11-04.
 - [x] **9.1 Buttons**: reset (start, paused), step back, play/pause, step forward, in that order. The play icon follows the engine state, so reset and scrubbing keep it right.
 - [x] **9.2 Scrubber**: a slider from 0 to the scene's end (`SimulationEngine.getDuration`: the last event, or the last moving particle leaving the scene, solved from its straight path). Dragging pauses playback and resumes it on release. The end grows with sandbox edits or when playing past it.
 
+## Phase 10: Playback end and speed
+
+Requested 2026-11-04: "the timer continues even after the scenario has completed" and the speed slider was too sensitive.
+
+- [x] **10.1 Stop at the end**: playback pauses at `getDuration()` (moving in reverse, at 0). Play at the end starts over. Exits get a 1-tick margin so departed particles are gone when playback stops. Step forward stops at the end too.
+- [x] **10.2 Speed slider**: stops at -10x, -5x, -2x, -1x, 0, 1x, 2x with 20 even steps between each (0.05x between -2x and 2x), clickable stop labels, a readout that resets to 1x when clicked, arrow keys step one position. Negative speeds play in reverse.
+- [x] **10.3 Reverse playback cost**: going back without crossing an event or a departure only moves particles along their paths instead of rebuilding the scene each frame.
+
 ---
 
 ## Done
