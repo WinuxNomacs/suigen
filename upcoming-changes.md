@@ -115,7 +115,7 @@ The app aims to be scientifically accurate (README, "Accuracy & Validation"). Th
 - [x] **4.1 Upgrade ESLint 8 to ESLint 9** (ESLint 8 is no longer supported), moving to `eslint.config.mjs` and the matching typescript-eslint config. Lint results should not change.
 - [x] **4.2 Review `npm audit`**: 39 warnings, all in development tools (0 in what the app ships). Fix what upgrades without breaking changes; write down the rest.
 - [x] **4.3 Add a "Status" section to the README** saying what is built versus planned (forces, worker threads, save/load, measuring tools, d/f orbitals), so readers don't take the wishlist as current features.
-- [ ] **4.4 (Optional, deferred)** Split three.js into its own file to clear the 500 kB bundle warning. Deferred 2026-11-03: the warning is about download size, which does not apply to a desktop app loading from disk.
+- [x] **4.4 Bundle size warning**: `chunkSizeWarningLimit: 800` (kB) in `vite.renderer.config.mts`. Measured 2026-11-03: splitting gives three.js 569.65 kB, zod 86.73 kB, app 50.82 kB, so three.js alone stays over the 500 kB default and a split could not clear the warning. Size doesn't matter for a desktop app loading from disk.
 
 ---
 
@@ -154,7 +154,7 @@ Requested 2026-11-03: upgrade Node and bring every package current.
 - [x] **7.1 Node 26.13.0 LTS** on this machine (`brew upgrade node`, from the end-of-life 25.6.1).
 - [x] **7.2 Packages to latest**: Vitest 5.1.0, ESLint 10.14.0 (+ `@eslint/js` 10.0.1), three and `@types/three` 0.187.0, Electron 45.2.2, TypeScript 6.0.3. `eslint-plugin-import` (supports ESLint only up to 9) replaced by `eslint-plugin-import-x` 4.17.1.
 - [x] **7.3 TypeScript 6 config**: removed the deprecated, unused `baseUrl`; `strict` is now on (the TS 6 default, set explicitly). It found one real issue: a particle with energy 0 would have shown a stray "0" in the info panel.
-- [ ] **7.4 TypeScript 7** (latest is 7.0.2): blocked until typescript-eslint supports it (8.72.1 peer range is `>=4.8.4 <6.1.0`). Recheck on typescript-eslint releases.
+- [ ] **7.4 TypeScript 7** (latest is 7.0.2), on the back burner (decided 2026-11-03): little to gain (typecheck takes 1.5-1.7 s today; builds use Vite, not `tsc`). Blocked until typescript-eslint supports it (8.72.1 peer range is `>=4.8.4 <6.1.0`). Recheck on typescript-eslint releases.
 
 ---
 

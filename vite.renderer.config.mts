@@ -10,5 +10,8 @@ export default defineConfig({
     // in forge.config.ts.
     outDir: fileURLToPath(new URL('.vite/renderer/main_window', import.meta.url)),
     emptyOutDir: true,
+    // One bundle of about 707 kB (three.js alone is about 570 kB), loaded from disk in the desktop app.
+    // Splitting can't get under Vite's 500 kB default, so the limit records the intended size (plan item 4.4).
+    chunkSizeWarningLimit: 800,
   },
 });
