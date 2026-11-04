@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { RAW_PRESETS, validateScenario, loadPreset } from './ScenarioLoader';
 import { ScenarioSchema } from '../../shared/scenarioSchema';
 import {
-  DEUTERON_MASS, ELECTRON_MASS, EV_TO_JOULES, FINE_STRUCTURE, HBAR, NEUTRON_MASS, PROTON_MASS, SPEED_OF_LIGHT,
+  DEUTERON_MASS, ELECTRON_MASS, EV_TO_JOULES, FINE_STRUCTURE, HBAR, NEUTRON_MASS, PLANCK_CONSTANT, PROTON_MASS,
+  SPEED_OF_LIGHT, THERMAL_NEUTRON_SPEED_M_S,
 } from '../../shared/constants';
 import { energyLevel, ionizationKineticEnergy } from '../physics/transitions';
 import { electronSpeed } from '../physics/SimulationEngine';
@@ -169,6 +170,13 @@ describe('numbers in scenario text', () => {
     const s = loadPreset('deuterium-formation')!;
     const photon = s.events.map(e => e.particle).find(p => p?.type === 'photon')!;
     expect(Math.abs(photon.energy! - (M * M - md * md) / (2 * M))).toBeLessThan(2);
+  });
+
+  it('thermal neutron wavelength λ = h / m_n v compared with the drawn 1s cloud', () => {
+    const pm = (PLANCK_CONSTANT / (NEUTRON_MASS * THERMAL_NEUTRON_SPEED_M_S)) * 1e12;
+    const cloudPm = (2 * orbitalRadius({ n: 1, l: 0, m: 0 })) / 1000;
+    expect(text('deuterium-formation')).toContain(`about ${Math.round(pm / 10) * 10} pm long`);
+    expect(text('deuterium-formation')).toContain(`${Math.round(cloudPm)} pm across`);
   });
 });
 

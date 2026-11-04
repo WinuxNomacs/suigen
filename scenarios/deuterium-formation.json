@@ -5,7 +5,7 @@
     "title": "Building a Heavier Hydrogen",
     "summary": "Watch a proton and neutron snap together to form the nucleus of heavy hydrogen",
     "sections": {
-      "whatsHappening": "A neutron is approaching a proton. When they get close enough — within a couple of femtometers (a femtometer is a trillionth of a millimeter) — the strong nuclear force grabs them and pulls them together. They bind into a deuteron, the nucleus of deuterium (heavy hydrogen). A photon is released carrying away the excess binding energy.",
+      "whatsHappening": "A neutron is approaching a proton. If they get close enough — within a couple of femtometers (a femtometer is a trillionth of a millimeter) — the strong nuclear force can bind them. Usually the neutron just bounces off; this scenario shows the rarer outcome, where they bind into a deuteron, the nucleus of deuterium (heavy hydrogen). A photon is released carrying away the excess binding energy.",
       "whyItMatters": "Neutrons joining protons was the first step in building the elements, in the first few minutes after the Big Bang. Stars like the Sun make deuterium a different way, from two protons, but it is the same first step on the road to helium, which releases the energy that makes stars shine. Deuterium is also one of the two fuels, with tritium, planned for fusion power reactors on Earth.",
       "whatToWatch": "Watch the gray neutron approach the red proton from the right. The approach is fast-forwarded: a slow (thermal) neutron would take about 270 fs to cover this distance. When they meet, they bind, and a yellow gamma-ray photon shoots away carrying the 2.22 MeV of binding energy.",
       "funFact": "About 1 in every 6,400 hydrogen atoms in ocean water is actually deuterium. If we could fuse all the deuterium in a single gallon of seawater, it would release as much energy as burning a few hundred gallons of gasoline!"
@@ -92,7 +92,9 @@
   ],
   "simplifications": [
     "The neutron's approach is fast-forwarded: a thermal neutron at 2,200 m/s takes about 273 fs to cover the 600,000 fm shown.",
-    "The gamma ray's direction is random in reality; here it goes straight up."
+    "The gamma ray's direction is random in reality; here it goes straight up.",
+    "Capture is certain here. A real slow neutron meeting a free proton is about 60 times more likely to bounce off (scattering, 20.5 barn) than to be captured (0.333 barn; NIST neutron data).",
+    "The neutron is drawn as a point on a straight path. A neutron at 2,200 m/s is a wave about 180 pm long (λ = h / m_n v), comparable to a whole hydrogen atom (its 1s cloud is drawn 282 pm across), so it has no sharp path or point of impact."
   ],
   "extent": 650000
 }

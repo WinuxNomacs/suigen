@@ -6,7 +6,7 @@ New requests go in `new.md` (untracked) and are turned into phases here. Each ph
 
 **Up next**
 
-- Nothing planned. Phases 1-16 are done.
+- Nothing planned. Phases 1-17 are done.
 
 **Then**
 
@@ -274,6 +274,17 @@ Numbers computed 2026-11-04 (CODATA 2022, reduced-mass hydrogen):
 
 ---
 
+## Phase 17: Second scientific accuracy review
+
+Review requested 2026-11-04 ("Check the project for any scientific inaccuracies"). Every number shown in the app or written in scenario text was recomputed and matched; the fixes are all wording.
+
+- [x] **17.1 Ionization harm**: X-rays and gamma rays ionize; the UV in sunlight (about 3 to 4.4 eV) cannot, and damages DNA by direct absorption (Hydrogen Ionization, "why it matters").
+- [x] **17.2 Deuterium capture**: the text no longer implies capture always happens; the scenario lists that scattering is about 60 times likelier (20.5 b vs 0.333 b) and that a 2,200 m/s neutron is a wave about 180 pm long, comparable to the 282 pm drawn atom. A test computes both numbers.
+- [x] **17.3 Absorption examples**: skin warming and solar panels removed (not discrete-level absorption); stellar absorption lines added; solids absorb bands.
+- [x] **17.4 Smaller wording**: the ionization fast-forward travels 500,000 fm "until well outside the picture" (the frame shows about 275,000 fm); Pauli label says electrons in one atom; "four lines, all in the Balmer series".
+- [x] **17.5 Constants comment**: deuteron charge radius 2.128 fm (CODATA 2022: 2.12778 fm), was 2.14.
+- [x] **17.6 README**: intro lists hydrogen ionization; the wishlist no longer calls 100 particles the most an atom has (uranium-238 has 330, the heaviest over 400).
+
 ## Done
 
 _Move finished items here with their commit hash._
@@ -312,3 +323,4 @@ _Move finished items here with their commit hash._
 - **Phase 14 (14.1-14.3)**: `393e28b`. Typecheck, lint, 80 tests (step logic: advance, never back, skip ahead; engine tutorial facts). Electron with real clicks in a fresh session: 9 tutorial checks (first-visit card and highlight per step, done text with the computed 2.223 MeV, link to Deuterium Formation, not shown again, Show tutorial, Skip, remembered after reload); capture, loop, speed, timeline, phase 2 and 5 checks (56) pass.
 - **Phase 15 (15.1-15.5)**: `c81a2ef`. Typecheck, lint, 92 tests (ticks/real-time inverse, scenario numbers in text, validator cases, scenario and sandbox ionization, real-time motion), web build. Electron: 7 ionization checks (gallery, start state, free 7.616 eV electron with fast-forward label, km/s in the panel, sandbox 21.2 eV ionizes, simplification), plus tutorial, capture, loop, speed, timeline, phase 2 and 5 checks (65). Not run in CI: GitHub Actions disabled at the user's request.
 - **Phase 16 (16.1-16.8)**: `98e3f13`. Typecheck, lint, 116 tests, web build, `npm run package` and a launch of the packaged app. End to end: 11 desktop checks on the built main process and preload (bridge exposes only two calls and no Node; save with safe default name; My scenarios; invalid JSON, physics-invalid, oversized and markup files handled; reopen; edit in sandbox replays; form prefilled), 5 browser checks (download name, file picker open, invalid file, delete), and the 72 earlier checks. Not run in CI (GitHub Actions disabled).
+- **Phase 17 (17.1-17.6)**: `565ee62`. Typecheck, lint, 117 tests (thermal neutron wavelength and drawn cloud size in the text), web build. Electron: 8 checks that each corrected text shows in its scenario, no console errors; earlier science panel check passes. Deuteron radius from CODATA 2022 (NIST listing via mirror). Not run in CI (GitHub Actions disabled).

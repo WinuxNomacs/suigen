@@ -3,7 +3,7 @@
 [![CI](https://github.com/WinuxNomacs/suigen/actions/workflows/ci.yml/badge.svg)](https://github.com/WinuxNomacs/suigen/actions/workflows/ci.yml)
 
 ## Project Overview
-Electron-based desktop application that animates events inside a single atom in 3D (photon absorption and emission, Compton scattering, deuterium formation) for teaching. The numbers it shows are computed from physical constants and every simplification is listed in the app; it is an animation of known results, not a physics simulation (no forces or fields are computed).
+Electron-based desktop application that animates events inside a single atom in 3D (photon absorption and emission, hydrogen ionization, Compton scattering, deuterium formation) for teaching. The numbers it shows are computed from physical constants and every simplification is listed in the app; it is an animation of known results, not a physics simulation (no forces or fields are computed).
 
 The name "suigen" and resulting common nickname "sui" are based on the latin term "Sui Generis" - Of its own kind; constituting a class alone.
 
@@ -123,7 +123,7 @@ Ongoing work is tracked in [upcoming-changes.md](upcoming-changes.md).
 - **WebGL 2.0**: 3D graphics via Three.js or Babylon.js
 - **Shaders**: Custom GLSL for field visualization (gradient colors for field strength)
 - **Particle representation**: Spheres for particles, volumetric rendering for probability clouds
-- **Performance target**: 60fps with up to 100 particles (approximate upper bound for single atom)
+- **Performance target**: 60fps with up to 100 particles (enough for light atoms; uranium-238 alone has 330: 92 protons, 146 neutrons, 92 electrons)
 
 ### Physics Libraries
 - Evaluate existing quantum simulation libraries (QuTiP, QuantumOptics.js) or implement custom solvers
@@ -205,7 +205,7 @@ Ongoing work is tracked in [upcoming-changes.md](upcoming-changes.md).
 ---
 
 ## Performance Constraints
-- **Max particles**: ~100 (sufficient for single atom + field interactions)
+- **Max particles**: ~100 (light atoms; the heaviest atoms have over 400 particles)
 - **Field resolution**: Adaptive (higher detail near particles)
 - **Frame rate**: ≥60fps on modern hardware (2020+ laptops)
 - **Memory**: <500MB for typical simulation

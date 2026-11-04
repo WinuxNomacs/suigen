@@ -6,7 +6,7 @@
     "summary": "Watch an ultraviolet photon tear the electron out of a hydrogen atom",
     "sections": {
       "whatsHappening": "A photon of ultraviolet light flies into a hydrogen atom. It carries more energy than the 13.6 electron volts that hold the electron to the proton, so instead of lifting the electron to a higher orbital, it frees the electron completely. The photon vanishes, the electron cloud disappears, and the electron flies away as a free particle, leaving a bare proton behind. The atom has been split into its two pieces: this is called ionization.",
-      "whyItMatters": "Ionization is why ultraviolet light and X-rays are harmful: freed electrons break chemical bonds, including those in DNA. It is also the photoelectric effect, which Einstein explained in 1905 by treating light as particles. Lab instruments called photoelectron spectrometers use this exact process, with the same 21.2 eV ultraviolet light from a helium lamp, to measure how tightly atoms and molecules hold their electrons.",
+      "whyItMatters": "Ionization is why X-rays and gamma rays are harmful: freed electrons break chemical bonds, including those in DNA. Only light above about 10 eV can ionize, and the Earth's atmosphere absorbs that part of sunlight. The ultraviolet that reaches us (about 3 to 4.4 eV) cannot free electrons; it damages DNA a different way, by being absorbed directly and making neighboring DNA bases bond together. Ionization is also the photoelectric effect, which Einstein explained in 1905 by treating light as particles. Lab instruments called photoelectron spectrometers use this exact process, with the same 21.2 eV ultraviolet light from a helium lamp, to measure how tightly atoms and molecules hold their electrons.",
       "whatToWatch": "Follow the photon in from the left. When it reaches the atom, the round 1s cloud vanishes and a single electron leaves upward at 1,637 km/s. That is fast, but under 1% of the speed of light, so its trip out of the picture is fast-forwarded: the timeline says so. The proton stays put. It recoils too, but 1,836 times more slowly (891 m/s).",
       "funFact": "The glowing red clouds in photos of nebulae such as the Orion Nebula are hydrogen that ultraviolet starlight keeps ionizing. When a proton recaptures an electron, the electron cascades down the energy levels, and one step, from n = 3 to n = 2, gives off red light at 656 nm."
     }
@@ -122,7 +122,7 @@
     "The photon is absorbed when it reaches the nucleus. Real absorption has no single point of impact.",
     "The electron's direction is random in reality, most likely along the light's polarization (a cos²θ distribution). Here it leaves straight up, the most likely direction for vertically polarized light.",
     "The proton's recoil (891 m/s) is not drawn: while the electron leaves the picture it moves about 270 fm, far too little to see at this scale.",
-    "The electron's departure is fast-forwarded: it really takes 0.31 fs to cross the 500,000 fm shown."
+    "The electron's departure is fast-forwarded: it really takes 0.31 fs to travel the 500,000 fm until it is well outside the picture."
   ],
   "extent": 250000
 }
