@@ -298,6 +298,8 @@ body {
 }
 
 #timeline button:hover { background: #2a2a4e; }
+#timeline #btn-loop { display: inline-flex; align-items: center; padding: 5px 10px; color: #666; }
+#timeline #btn-loop.on { color: #4488ff; border-color: #4488ff; }
 
 #timeline label { color: #888; font-size: 12px; }
 /* The speed slider and readout never change size, so dragging the speed doesn't shake the bar. The

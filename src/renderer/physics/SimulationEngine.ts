@@ -1,5 +1,5 @@
 import { OrbitalState, ScenarioEvent, SimulationState, ParticleData, ParticleType, TimeCompression, Vec3 } from '../../shared/types';
-import { DEFAULT_SCENE_EXTENT_FM, FS_PER_TICK, LIGHT_SPEED_FM_PER_TICK, STEP_TICKS } from '../../shared/constants';
+import { DEFAULT_PLAYBACK_SPEED, DEFAULT_SCENE_EXTENT_FM, FS_PER_TICK, LIGHT_SPEED_FM_PER_TICK, STEP_TICKS } from '../../shared/constants';
 import { ParticleManager } from '../particles/ParticleManager';
 import { orbitalRadius } from '../particles/OrbitalMesh';
 import { findTransition } from './transitions';
@@ -39,7 +39,8 @@ export class SimulationEngine {
     this.state = {
       playing: false,
       time: 0,
-      speed: 1,
+      speed: DEFAULT_PLAYBACK_SPEED,
+      loop: true,
     };
   }
 
@@ -77,14 +78,22 @@ export class SimulationEngine {
   }
 
   /**
-   * Continues playback from the current time; it never moves the playhead. At the end (or at the start
-   * when the speed is negative) there is nothing to play, so it stays paused: use reset or the scrubber.
+   * Continues playback from the current time. Only at the end (or at the start when the speed is
+   * negative) does it move the playhead: with loop on it starts over from the other end; with loop off
+   * there is nothing to play, so it stays paused.
    */
   play(): void {
-    if (this.state.speed > 0 && this.state.time >= this.getDuration()) return;
-    if (this.state.speed < 0 && this.state.time <= 0) return;
+    const end = this.getDuration();
+    const atEnd = this.state.speed > 0 && this.state.time >= end;
+    const atStart = this.state.speed < 0 && this.state.time <= 0;
+    if (atEnd || atStart) {
+      if (!this.state.loop) return;
+      this.seek(atEnd ? 0 : end);
+    }
     this.state.playing = true;
   }
+
+  setLoop(loop: boolean): void { this.state.loop = loop; }
   pause(): void { this.state.playing = false; }
   togglePlay(): void {
     if (this.state.playing) this.pause();
@@ -109,11 +118,17 @@ export class SimulationEngine {
     let target = this.state.time + dt;
     const end = this.getDuration();
     if (dt > 0 && target >= end) {
-      target = Math.max(end, this.state.time);
-      this.pause();
+      if (this.state.loop) target = 0;
+      else {
+        target = Math.max(end, this.state.time);
+        this.pause();
+      }
     } else if (dt < 0 && target <= 0) {
-      target = 0;
-      this.pause();
+      if (this.state.loop) target = end;
+      else {
+        target = 0;
+        this.pause();
+      }
     }
     this.seek(target);
   }

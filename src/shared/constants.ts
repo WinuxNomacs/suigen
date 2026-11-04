@@ -36,6 +36,7 @@ export const TICKS_PER_REAL_SECOND = 100; // playback rate at speed 1
 export const LIGHT_SPEED_FM_PER_TICK = 5000; // a photon crosses 2,000,000 fm in 4 s at speed 1
 export const FS_PER_TICK = LIGHT_SPEED_FM_PER_TICK / SPEED_OF_LIGHT_FM_PER_FS; // ~1.668e-5 fs
 export const STEP_TICKS = 10; // step forward/back buttons
+export const DEFAULT_PLAYBACK_SPEED = 0.25; // slow enough to follow the events at first sight
 export const ORBITAL_MORPH_TICKS = 50; // visual crossfade between clouds; not a physical duration
 
 // Nucleons closer than this share one label. Nuclei are a few fm across; atoms are ~100,000 fm.

@@ -193,6 +193,13 @@ Requested 2026-11-04.
 - [x] **11.2 Play continues from the current time**: play never moves the playhead (phase 10 restarted from the start when pressed at the end; now it stays paused there, and reset or the scrubber starts over). `tick` does nothing while paused, so a paused scene cannot drift. Speed changes, paused or playing, keep the current time.
 - [x] **11.3 Steady speed controls**: the readout button has a fixed width for the longest value (7 characters, checked by a test), and only the scrubber and time text may shrink, so dragging the speed no longer resizes the slider. A long fast-forward label is cut with an ellipsis (full text in its tooltip) instead of overflowing the bar.
 
+## Phase 12: Loop and default speed
+
+Requested 2026-11-04.
+
+- [x] **12.1 Default speed 0.25x** (`DEFAULT_PLAYBACK_SPEED`); clicking the readout returns to it. A test ties the slider's starting position and readout in `index.html` to the constant.
+- [x] **12.2 Loop toggle** (looping-arrows button after step forward), on by default: at the end playback restarts from the start, in reverse it wraps from the start to the end, and play at the end starts over. With loop off, phase 11 behavior (stop at the end, play stays put).
+
 ---
 
 ## Done

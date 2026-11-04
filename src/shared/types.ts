@@ -90,4 +90,5 @@ export interface SimulationState {
   playing: boolean;
   time: number;
   speed: number;
+  loop: boolean; // restart from the other end on reaching the end (or the start in reverse)
 }

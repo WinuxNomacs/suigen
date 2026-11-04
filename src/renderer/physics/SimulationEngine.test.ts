@@ -4,9 +4,12 @@ import { FakeParticleManager } from '../../test/FakeParticleManager';
 import { loadPreset } from '../scenarios/ScenarioLoader';
 import { ScenarioEvent } from '../../shared/types';
 
+// Tests below set speed and loop explicitly; the app defaults (0.25x, loop on) have their own test.
 function setup() {
   const pm = new FakeParticleManager();
   const engine = new SimulationEngine(pm.asManager());
+  engine.setSpeed(1);
+  engine.setLoop(false);
   return { pm, engine };
 }
 
@@ -267,5 +270,52 @@ describe('SimulationEngine', () => {
     engine.play();
     engine.tick(100);
     expect(engine.state.time).toBe(50);
+  });
+
+  it('defaults to 0.25x with loop on', () => {
+    const engine = new SimulationEngine(new FakeParticleManager().asManager());
+    expect(engine.state.speed).toBe(0.25);
+    expect(engine.state.loop).toBe(true);
+  });
+
+  it('loop restarts from the start at the end and keeps playing', () => {
+    const { pm, engine } = setup();
+    const s = loadPreset('photon-absorption')!;
+    engine.loadScenario(s.particles, s.events, s.compressions, s.extent);
+    const start = pm.snapshot();
+    const end = engine.getDuration();
+    engine.setLoop(true);
+    engine.play();
+    for (let t = 0; t + 10 < end; t += 10) engine.tick(10);
+    engine.tick(10); // crosses the end
+    expect(engine.state.time).toBe(0);
+    expect(engine.state.playing).toBe(true);
+    expect(pm.snapshot()).toBe(start);
+    engine.tick(30);
+    expect(engine.state.time).toBe(30);
+  });
+
+  it('loop in reverse wraps from the start to the end', () => {
+    const { engine } = setup();
+    const s = loadPreset('photon-emission')!;
+    engine.loadScenario(s.particles, s.events, s.compressions, s.extent);
+    engine.setLoop(true);
+    engine.setSpeed(-1);
+    engine.seek(5);
+    engine.play();
+    engine.tick(10);
+    expect(engine.state.time).toBe(engine.getDuration());
+    expect(engine.state.playing).toBe(true);
+  });
+
+  it('play at the end starts over when loop is on', () => {
+    const { engine } = setup();
+    const s = loadPreset('photon-emission')!;
+    engine.loadScenario(s.particles, s.events, s.compressions, s.extent);
+    engine.seek(engine.getDuration());
+    engine.setLoop(true);
+    engine.play();
+    expect(engine.state.time).toBe(0);
+    expect(engine.state.playing).toBe(true);
   });
 });

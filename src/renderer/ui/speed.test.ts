@@ -1,4 +1,6 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_PLAYBACK_SPEED } from '../../shared/constants';
 import {
   SPEED_POSITION_MAX, SPEED_STOPS, STEPS_PER_SEGMENT, formatSpeed, formatStop, positionToSpeed, speedToPosition,
 } from './speed';
@@ -9,7 +11,12 @@ describe('playback speed slider', () => {
     SPEED_STOPS.forEach((speed, i) => expect(positionToSpeed(i * STEPS_PER_SEGMENT)).toBe(speed));
     expect(positionToSpeed(0)).toBe(-2);
     expect(positionToSpeed(SPEED_POSITION_MAX)).toBe(2);
-    expect(speedToPosition(1)).toBe(70); // default, matches index.html
+  });
+
+  it('index.html starts the slider and readout at the default speed', () => {
+    const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+    expect(html).toContain(`id="speed" type="range" min="0" max="${SPEED_POSITION_MAX}" step="1" value="${speedToPosition(DEFAULT_PLAYBACK_SPEED)}"`);
+    expect(html).toMatch(new RegExp(`id="speed-value"[^>]*>${formatSpeed(DEFAULT_PLAYBACK_SPEED)}<`));
   });
 
   it('steps 0.025x near 0 and 0.1x between 1x and 2x', () => {

@@ -1,5 +1,6 @@
 import { SimulationEngine } from '../physics/SimulationEngine';
 import { formatDuration } from '../physics/time';
+import { DEFAULT_PLAYBACK_SPEED } from '../../shared/constants';
 import { SPEED_POSITION_MAX, SPEED_STOPS, formatSpeed, formatStop, positionToSpeed, speedToPosition } from './speed';
 
 const PLAY = '▶';
@@ -44,7 +45,17 @@ export class Timeline {
       stops.forEach((b, i) => b.classList.toggle('active', SPEED_STOPS[i] === speed));
     };
     this.speedInput.addEventListener('input', () => applySpeed(positionToSpeed(Number(this.speedInput.value))));
-    this.speedValue.addEventListener('click', () => applySpeed(1));
+    this.speedValue.addEventListener('click', () => applySpeed(DEFAULT_PLAYBACK_SPEED));
+
+    const btnLoop = document.getElementById('btn-loop') as HTMLButtonElement;
+    const applyLoop = (loop: boolean) => {
+      engine.setLoop(loop);
+      btnLoop.classList.toggle('on', loop);
+      btnLoop.setAttribute('aria-pressed', String(loop));
+      btnLoop.title = loop ? 'Loop playback: on' : 'Loop playback: off';
+    };
+    btnLoop.addEventListener('click', () => applyLoop(!engine.state.loop));
+    applyLoop(engine.state.loop);
     applySpeed(engine.state.speed);
 
     // Dragging the scrubber pauses playback and resumes it on release.
