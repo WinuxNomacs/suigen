@@ -5,3 +5,5 @@ dist/
 *.tsbuildinfo
 .DS_Store
 CLAUDE.local.md
+# Request inbox (untracked; see upcoming-changes.md)
+new.md

@@ -1,8 +1,27 @@
 # Upcoming Changes
 
-Tracks the fixes from the 2026-11-03 project review. Check items off as they land and note the commit next to each one.
+## Phases (current and upcoming)
 
-Order: science accuracy first, then interaction bugs, then validation and tests, then tooling. Each phase should pass `npm run typecheck` and `npm run lint`, and be checked by hand in `./run.sh` before the next one starts.
+New requests go in `new.md` (untracked) and are turned into phases here. Each phase's details are further down; finished phases move to "Done" at the bottom.
+
+**Up next**
+
+- Nothing planned. Phases 1-16 are done.
+
+**Then**
+
+- (empty)
+
+**Later**
+
+- 7.4 TypeScript 7: blocked until typescript-eslint supports it.
+- 8.7 p orbitals with m = ±1 drawn as rings (latent: nothing creates m ≠ 0 yet).
+- 8.8 Absorption from 2p offering 2p → 3d (needs d orbitals).
+- Turn GitHub Actions back on when the user says so (disabled 2026-11-04, out of minutes; see `CLAUDE.local.md`).
+
+---
+
+Phases 1-6 came from the 2026-11-03 project review; later phases from requests. Each phase passes `npm run typecheck`, `npm run lint` and `npm test`, and is checked in the running app, before it merges.
 
 ---
 

@@ -1,9 +1,10 @@
 name: CI
 
+# Actions minutes are scarce: runs only for a release tag or by hand (Actions > CI > Run workflow),
+# not on every push or pull request. Ask before adding triggers, matrix entries or schedules.
 on:
   push:
-    branches: [main]
-  pull_request:
+    tags: ['v*']
   workflow_dispatch:
 
 permissions:
@@ -43,8 +44,6 @@ jobs:
   package:
     name: package (${{ matrix.os }})
     needs: check
-    # Packaging is slower; run it on main and manual runs, not on every pull request.
-    if: github.event_name != 'pull_request'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
