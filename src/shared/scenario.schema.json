@@ -159,6 +159,7 @@
             "additionalProperties": false
           },
           "spin": {
+            "description": "Spin projection m_s in units of hbar: +-0.5 for electrons, protons and neutrons, +-1 for photons",
             "type": "number"
           },
           "orbital": {
@@ -302,6 +303,7 @@
                     "additionalProperties": false
                   },
                   "spin": {
+                    "description": "Spin projection m_s in units of hbar: +-0.5 for electrons, protons and neutrons, +-1 for photons",
                     "type": "number"
                   },
                   "orbital": {
@@ -531,6 +533,7 @@
                     "additionalProperties": false
                   },
                   "spin": {
+                    "description": "Spin projection m_s in units of hbar: +-0.5 for electrons, protons and neutrons, +-1 for photons",
                     "type": "number"
                   },
                   "orbital": {

@@ -11,7 +11,6 @@ export class FakeParticleManager {
     const data: ParticleData = {
       type,
       momentum: { x: 0, y: 0, z: 0 },
-      spin: type === 'photon' ? 1 : 0.5,
       ...extra,
       id,
       position: { ...position },

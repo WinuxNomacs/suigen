@@ -156,6 +156,20 @@ Requested 2026-11-03: upgrade Node and bring every package current.
 - [x] **7.3 TypeScript 6 config**: removed the deprecated, unused `baseUrl`; `strict` is now on (the TS 6 default, set explicitly). It found one real issue: a particle with energy 0 would have shown a stray "0" in the info panel.
 - [ ] **7.4 TypeScript 7** (latest is 7.0.2), on the back burner (decided 2026-11-03): little to gain (typecheck takes 1.5-1.7 s today; builds use Vite, not `tsc`). Blocked until typescript-eslint supports it (8.72.1 peer range is `>=4.8.4 <6.1.0`). Recheck on typescript-eslint releases.
 
+
+## Phase 8: Scientific accuracy review
+
+Review requested 2026-11-03 ("I don't need perfect but I don't want to miss mistakes"). Every number was recomputed; constants checked against the NIST CODATA 2022 table.
+
+- [x] **8.1 Hydrogen levels**: `E_n = -13.598 eV / n²` from the Rydberg energy with the reduced-mass factor (was a rounded 13.6, off by 1.7 meV at n = 1, 30 times more than the simplifications text admitted). Toolbar and scenario photon energies set to the exact gaps (10.1987, 12.0874, 12.7484, 1.8887 eV); a test ties each toolbar value to its labeled transition and checks Lyman-alpha = 121.567 nm.
+- [x] **8.2 Sandbox simplifications listed**: hydrogen 1s cloud for every electron (any nucleus, or none), no Pauli exclusion, clouds left behind when a proton is deleted, absorption at the 90% surface, no ionization.
+- [x] **8.3 Scenario text**: helium's origin (mostly Big Bang; Earth's from alpha decay), Pauli applies to identical fermions, photons above 13.6 eV ionize, lasers use stimulated emission, 2p decay rate 6.26 × 10⁸ /s (with reduced mass), helium 90% radius 83.5 pm, deuterium gamma 2.2232 MeV after 1.3 keV deuteron recoil, deuterium is one of two fusion fuels. Tests now compute the decay rate, helium radius, Lyman-alpha energies and gamma energy and compare them with the files.
+- [x] **8.4 README** overview no longer claims a "scientifically accurate simulation" of "fermion fields" for research.
+- [x] **8.5 Spin display**: intrinsic spin by type (1/2 or 1), plus m_s only when a scenario sets it; validator rejects impossible projections.
+- [x] **8.6 Constants** updated from CODATA 2018 to 2022 (changes of about 1e-9; nothing visible). Added the deuteron mass.
+- [ ] **8.7 (Latent)** p orbitals with m = ±1 would be drawn as dumbbells; the real |ψ|² is a ring around the axis. Nothing creates m ≠ 0 yet.
+- [ ] **8.8 (Latent)** Absorption from 2p always picks 3s because d clouds aren't drawn, though 2p → 3d is also allowed. Revisit with d orbitals.
+
 ---
 
 ## Done

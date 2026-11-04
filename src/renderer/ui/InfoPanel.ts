@@ -8,13 +8,22 @@ type PanelMode = 'gallery' | 'description' | 'particle';
 // Shown with every scenario and in the sandbox. Numbers are computed; see upcoming-changes.md, Phase 1.
 const GENERAL_SIMPLIFICATIONS = [
   'No forces are simulated. Particles stay where they are placed; only photons and scripted particles move, in straight lines at constant speed.',
-  'Energy levels use the hydrogen formula E = -13.6 eV / n\u00b2, which ignores fine structure and other small corrections (1 to 6 \u00d7 10\u207b\u2075 eV at n = 2).',
+  'Energy levels use the hydrogen formula E = -13.598 eV / n\u00b2 (corrected for the proton\u2019s finite mass). It ignores fine structure and smaller corrections, which shift the n = 2 levels by 1 to 6 \u00d7 10\u207b\u2075 eV.',
   'Only s and p clouds up to n = 4 are drawn. The outer surface holds 90% of the probability and the inner shell marks the most likely distance. The inner rings of the 2s, 3s, 3p, 4s and 4p clouds (radial nodes) are not drawn.',
   'An electron absorbs a photon within \u00b10.05 eV of a transition energy. Real absorption is about 100,000 times more selective: the 2p level\u2019s natural width is about 0.4 \u00b5eV.',
   'The change between clouds is drawn as a short crossfade; how long a transition really takes is not modeled.',
   'Photon wave trails are drawn in proportion to the real wavelength only between about 4 pm and 31 pm (X-rays). Ultraviolet and visible light have wavelengths hundreds to thousands of times larger than the atom and are drawn shorter; gamma rays are drawn longer.',
   'Particle balls are markers, not sizes: electrons have no known size, and a proton\u2019s radius is about 0.84 fm.',
   'Times are real elapsed time. \u201c\u2248\u201d means the time includes a fast-forwarded span, labeled \u201cfast-forward\u201d while it plays.',
+];
+
+// Shown in the sandbox in addition to the general list.
+const SANDBOX_SIMPLIFICATIONS = [
+  'Every placed electron gets a hydrogen 1s cloud (charge Z = 1), on the nearest proton or, with no proton, where you click. The number of protons does not change its cloud or levels: around a helium nucleus the real jump from 1s to 2p takes 40.8 eV, not 10.2 eV.',
+  'The Pauli principle is not enforced: any number of placed electrons share the 1s cloud, where only two fit.',
+  'Deleting a proton leaves its electron clouds in place; nothing frees the electrons.',
+  'A photon is absorbed as it enters the cloud\u2019s 90% surface. Real absorption has no single point of impact.',
+  'Ionization is not modeled: a real photon above 13.6 eV can knock the electron out of the atom.',
 ];
 
 type Child = Node | string | null | undefined | false;
@@ -31,6 +40,13 @@ function h(tag: string, attrs: Record<string, string> = {}, ...children: Child[]
     if (c) el.append(c);
   }
   return el;
+}
+
+/** Intrinsic spin from the particle type, plus the projection m_s when the scenario sets it. */
+export function spinText(p: Pick<ParticleData, 'type' | 'spin'>): string {
+  if (p.type === 'photon') return 'spin: 1';
+  if (p.spin === undefined) return 'spin: 1/2';
+  return `spin: 1/2, m_s = ${p.spin > 0 ? '+' : '\u2212'}1/2`;
 }
 
 function simplifications(extra: string[] = []): HTMLElement {
@@ -112,7 +128,7 @@ export class InfoPanel {
         h('p', { class: 'hint' }, 'Select a particle type from the toolbar, then click in the viewport to place it.'),
         h('p', { class: 'hint' }, 'Electrons settle around the nearest proton. Photons fly toward the nearest electron with the energy chosen under the \u03b3 button.'),
         h('p', { class: 'hint' }, 'An electron absorbs a photon only if its energy matches a jump to a higher orbital (10.2 eV takes 1s to 2p). Otherwise the photon passes straight through.'),
-        simplifications(),
+        simplifications(SANDBOX_SIMPLIFICATIONS),
       );
       return;
     }
@@ -184,7 +200,7 @@ export class InfoPanel {
       line(`x: ${p.position.x.toFixed(1)} fm`),
       line(`y: ${p.position.y.toFixed(1)} fm`),
       line(`z: ${p.position.z.toFixed(1)} fm`),
-      line(`spin: ${p.spin}`),
+      line(spinText(p)),
       p.orbital && line(`orbital: n=${p.orbital.n}, l=${p.orbital.l}, m=${p.orbital.m}`),
       p.energy !== undefined && line(`energy: ${formatEnergy(p.energy)}`),
       p.speed !== undefined && line(`speed: ${p.speed} c`),

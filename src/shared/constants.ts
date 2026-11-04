@@ -1,14 +1,18 @@
+// CODATA 2022 values (NIST, physics.nist.gov/constants), SI units. h, e and c are exact by definition.
 export const PLANCK_CONSTANT = 6.62607015e-34;
 export const HBAR = 1.054571817e-34;
 export const ELECTRON_CHARGE = 1.602176634e-19;
-export const ELECTRON_MASS = 9.1093837015e-31;
-export const PROTON_MASS = 1.67262192369e-27;
-export const NEUTRON_MASS = 1.67492749804e-27;
+export const ELECTRON_MASS = 9.1093837139e-31;
+export const PROTON_MASS = 1.67262192595e-27;
+export const NEUTRON_MASS = 1.67492750056e-27;
+export const DEUTERON_MASS = 3.3435837768e-27;
 export const SPEED_OF_LIGHT = 2.99792458e8;
-export const FINE_STRUCTURE = 7.2973525693e-3;
-export const BOHR_RADIUS = 5.29177210903e-11;
-export const COULOMB_CONSTANT = 8.9875517923e9;
+export const FINE_STRUCTURE = 7.2973525643e-3;
+export const BOHR_RADIUS = 5.29177210544e-11;
+export const COULOMB_CONSTANT = 8.9875517862e9;
 export const EV_TO_JOULES = 1.602176634e-19;
+// Rydberg energy R∞hc in eV (CODATA 2022): the binding energy for an infinitely heavy nucleus.
+export const RYDBERG_ENERGY_EV = 13.60569312299;
 
 export const BOHR_RADIUS_FM = BOHR_RADIUS * 1e15;
 // 1 m/s = 1e15 fm / 1e15 fs, so the speed of light has the same value in fm/fs.
@@ -50,5 +54,7 @@ export const TRAIL_MAX_DRAWN_FM = 150000;
 // hc in eV·pm, for photon wavelength from energy: λ = hc / E
 export const HC_EV_PM = 1239841.98;
 
-export const RYDBERG_EV = 13.6;
+// Hydrogen's ground-state binding energy: the Rydberg energy times the reduced-mass factor
+// μ/m_e = 1 / (1 + m_e/m_p), because the proton is not infinitely heavy. 13.598287 eV.
+export const HYDROGEN_BINDING_EV = RYDBERG_ENERGY_EV / (1 + ELECTRON_MASS / PROTON_MASS);
 export const ABSORPTION_TOLERANCE_EV = 0.05;

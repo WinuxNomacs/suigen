@@ -34,6 +34,10 @@ export function checkScenarioPhysics(s: Scenario): string[] {
         problems.push(`${where}: orbital ${fmt(p.orbital)} cannot be drawn (s and p up to n = ${MAX_RENDERED_N})`);
       }
     }
+    if (p.spin !== undefined) {
+      const allowed = p.type === 'photon' ? [1, -1] : [0.5, -0.5];
+      if (!allowed.includes(p.spin)) problems.push(`${where}: a ${p.type}'s spin projection must be ${allowed.join(' or ')}`);
+    }
     if (p.type === 'photon' && p.speed !== undefined && p.speed !== 1) problems.push(`${where}: photons move at c`);
     if (p.type !== 'photon' && p.direction && (p.speed ?? 1) >= 1 && !inCompression(time)) {
       problems.push(`${where}: a ${p.type} cannot move at c; set speed < 1 or put its motion in a compressed span`);

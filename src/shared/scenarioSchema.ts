@@ -15,7 +15,7 @@ const particle = z.strictObject({
   type: particleType,
   position: vec3.optional(),
   momentum: vec3.optional(),
-  spin: z.number().optional(),
+  spin: z.number().optional().describe('Spin projection m_s in units of hbar: +-0.5 for electrons, protons and neutrons, +-1 for photons'),
   orbital: orbital.optional(),
   direction: vec3.optional(),
   speed: z.number().gt(0).max(1).optional().describe('Speed as a fraction of the speed of light'),

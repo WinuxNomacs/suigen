@@ -6,13 +6,13 @@
     "summary": "Watch a proton and neutron snap together to form the nucleus of heavy hydrogen",
     "sections": {
       "whatsHappening": "A neutron is approaching a proton. When they get close enough — within a couple of femtometers (a femtometer is a trillionth of a millimeter) — the strong nuclear force grabs them and pulls them together. They bind into a deuteron, the nucleus of deuterium (heavy hydrogen). A photon is released carrying away the excess binding energy.",
-      "whyItMatters": "Neutrons joining protons was the first step in building the elements, in the first few minutes after the Big Bang. Stars like the Sun make deuterium a different way, from two protons, but it is the same first step on the road to helium, which releases the energy that makes stars shine. Deuterium is also the main fuel planned for fusion power reactors on Earth.",
+      "whyItMatters": "Neutrons joining protons was the first step in building the elements, in the first few minutes after the Big Bang. Stars like the Sun make deuterium a different way, from two protons, but it is the same first step on the road to helium, which releases the energy that makes stars shine. Deuterium is also one of the two fuels, with tritium, planned for fusion power reactors on Earth.",
       "whatToWatch": "Watch the gray neutron approach the red proton from the right. The approach is fast-forwarded: a slow (thermal) neutron would take about 270 fs to cover this distance. When they meet, they bind, and a yellow gamma-ray photon shoots away carrying the 2.22 MeV of binding energy.",
       "funFact": "About 1 in every 6,400 hydrogen atoms in ocean water is actually deuterium. If we could fuse all the deuterium in a single gallon of seawater, it would release as much energy as burning a few hundred gallons of gasoline!"
     }
   },
   "scientific": {
-    "narrative": "A free neutron approaches a proton. Within about 2 fm, the attractive strong nuclear force (described at long range by pion exchange) can bind the two nucleons into a deuteron, the only bound state of the two-nucleon system. Because the neutron has no electric charge, there is no Coulomb barrier to overcome. The capture n + p → d + γ releases the binding energy, 2.224 MeV, as a gamma-ray photon. The deuteron has spin 1 (triplet state), isospin 0, and no excited states.",
+    "narrative": "A free neutron approaches a proton. Within about 2 fm, the attractive strong nuclear force (described at long range by pion exchange) can bind the two nucleons into a deuteron, the only bound state of the two-nucleon system. Because the neutron has no electric charge, there is no Coulomb barrier to overcome. The capture n + p → d + γ releases the binding energy, 2.224 MeV: the gamma-ray photon carries 2.223 MeV and the deuteron recoils with the remaining 1.3 keV. The deuteron has spin 1 (triplet state), isospin 0, and no excited states.",
     "equations": [
       {
         "label": "Binding energy",
@@ -91,7 +91,7 @@
           "y": 1,
           "z": 0
         },
-        "energy": 2224000
+        "energy": 2223249
       }
     }
   ],

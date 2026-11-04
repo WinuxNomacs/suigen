@@ -1,8 +1,9 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { hydrogenRadii } from './hydrogen';
 import { findTransition, energyLevel } from './transitions';
 import { formatDuration, realTime } from './time';
-import { FS_PER_TICK, SPEED_OF_LIGHT_FM_PER_FS, LIGHT_SPEED_FM_PER_TICK } from '../../shared/constants';
+import { FS_PER_TICK, SPEED_OF_LIGHT_FM_PER_FS, LIGHT_SPEED_FM_PER_TICK, HYDROGEN_BINDING_EV, HC_EV_PM } from '../../shared/constants';
 
 describe('hydrogen cloud radii (units of a0)', () => {
   // Reference values computed independently with the explicit radial functions (plan item 1.4).
@@ -30,18 +31,34 @@ describe('transitions', () => {
   const s1 = { n: 1, l: 0, m: 0 };
   const p2 = { n: 2, l: 1, m: 0 };
 
-  it('uses E = -13.6 eV / n^2', () => {
-    expect(energyLevel(1)).toBeCloseTo(-13.6, 6);
-    expect(energyLevel(2)).toBeCloseTo(-3.4, 6);
+  it('uses E = -13.598 eV / n^2 (Rydberg energy with the reduced-mass correction)', () => {
+    expect(HYDROGEN_BINDING_EV).toBeCloseTo(13.598287, 5);
+    expect(energyLevel(1)).toBeCloseTo(-13.598287, 5);
+    expect(energyLevel(2)).toBeCloseTo(-3.399572, 5);
+  });
+
+  it('gives the measured Lyman-alpha wavelength, 121.567 nm', () => {
+    const lambdaNm = HC_EV_PM / (energyLevel(2) - energyLevel(1)) / 1000;
+    expect(Math.abs(lambdaNm - 121.567)).toBeLessThan(0.002);
   });
 
   it.each([
-    [s1, 10.2, { n: 2, l: 1, m: 0 }],
-    [s1, 12.09, { n: 3, l: 1, m: 0 }],
-    [s1, 12.75, { n: 4, l: 1, m: 0 }],
-    [p2, 1.89, { n: 3, l: 0, m: 0 }],
+    [s1, 10.1987, { n: 2, l: 1, m: 0 }],
+    [s1, 12.0874, { n: 3, l: 1, m: 0 }],
+    [s1, 12.7484, { n: 4, l: 1, m: 0 }],
+    [p2, 1.8887, { n: 3, l: 0, m: 0 }],
   ])('toolbar energy: %o + %f eV -> %o', (from, ev, to) => {
     expect(findTransition(from, ev)).toEqual(to);
+  });
+
+  it('toolbar photon energies equal the transitions they are labeled with', () => {
+    const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+    const options = [...html.matchAll(/<option value="([\d.]+)" title="(\d)\w &#x2192; (\d)\w">/g)];
+    expect(options.length).toBe(4);
+    for (const [, value, n1, n2] of options) {
+      const gap = energyLevel(Number(n2)) - energyLevel(Number(n1));
+      expect(Math.abs(Number(value) - gap)).toBeLessThan(1e-4);
+    }
   });
 
   it('rejects energies that match no transition', () => {

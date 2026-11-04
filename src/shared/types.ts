@@ -17,7 +17,8 @@ export interface ParticleData {
   type: ParticleType;
   position: Vec3;
   momentum: Vec3;
-  spin: number;
+  /** Spin projection m_s in units of \u0127, only when a scenario sets it (e.g. the two helium electrons). */
+  spin?: number;
   orbital?: OrbitalState;
   direction?: Vec3;
   /** Speed as a fraction of the speed of light. Defaults to 1 (photons). */

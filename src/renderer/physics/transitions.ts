@@ -1,11 +1,12 @@
 import { OrbitalState } from '../../shared/types';
-import { RYDBERG_EV, ABSORPTION_TOLERANCE_EV } from '../../shared/constants';
+import { HYDROGEN_BINDING_EV, ABSORPTION_TOLERANCE_EV } from '../../shared/constants';
 
 const MAX_N = 4;
 const MAX_RENDERED_L = 1; // only s and p shapes exist
 
+// Bohr levels E_n = -13.598 eV / n² (reduced-mass corrected; fine structure ignored).
 export function energyLevel(n: number): number {
-  return -RYDBERG_EV / (n * n);
+  return -HYDROGEN_BINDING_EV / (n * n);
 }
 
 // Find an upward transition (Δl = ±1) whose energy gap matches the photon energy.

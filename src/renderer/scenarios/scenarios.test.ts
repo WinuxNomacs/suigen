@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { RAW_PRESETS, validateScenario, loadPreset } from './ScenarioLoader';
 import { ScenarioSchema } from '../../shared/scenarioSchema';
-import { ELECTRON_MASS, EV_TO_JOULES, SPEED_OF_LIGHT } from '../../shared/constants';
+import {
+  DEUTERON_MASS, ELECTRON_MASS, EV_TO_JOULES, FINE_STRUCTURE, HBAR, NEUTRON_MASS, PROTON_MASS, SPEED_OF_LIGHT,
+} from '../../shared/constants';
+import { energyLevel } from '../physics/transitions';
+import { orbitalRadius } from '../particles/OrbitalMesh';
 
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
 const problemsOf = (raw: unknown) => {
@@ -58,6 +62,12 @@ describe('scenario validation catches mistakes', () => {
     expect(problemsOf(s)).toEqual([]);
   });
 
+  it('an impossible spin projection', () => {
+    const s = clone(RAW_PRESETS['helium-atom']) as { particles: Array<Record<string, unknown>> };
+    s.particles[4].spin = 1;
+    expect(problemsOf(s).join()).toMatch(/spin projection must be 0.5 or -0.5/);
+  });
+
   it('a massive particle moving at c outside a compressed span', () => {
     const s = clone(RAW_PRESETS['deuterium-formation']) as Record<string, unknown>;
     delete s.compressions;
@@ -93,6 +103,41 @@ describe('Compton scenario physics', () => {
   it('electron speed matches its kinetic energy', () => {
     const gamma = 1 + electron.energy! / mc2;
     expect(electron.speed!).toBeCloseTo(Math.sqrt(1 - 1 / gamma ** 2), 3);
+  });
+});
+
+const mc2Ev = (kg: number) => (kg * SPEED_OF_LIGHT ** 2) / EV_TO_JOULES;
+const text = (key: string) => JSON.stringify(RAW_PRESETS[key]);
+
+describe('numbers in scenario text', () => {
+  it('Lyman-alpha photons carry the 1s-2p gap', () => {
+    const gap = energyLevel(2) - energyLevel(1);
+    for (const key of ['photon-absorption', 'photon-emission']) {
+      const s = loadPreset(key)!;
+      const photon = s.events.map(e => e.particle).find(p => p?.type === 'photon')!;
+      expect(Math.abs(photon.energy! - gap)).toBeLessThan(1e-4);
+    }
+  });
+
+  it('2p decay rate: A = (2/3)^8 α^5 m_e c² / ħ × μ/m_e = 6.26 × 10^8 /s', () => {
+    const mu = 1 / (1 + ELECTRON_MASS / PROTON_MASS);
+    const A = (2 / 3) ** 8 * FINE_STRUCTURE ** 5 * (ELECTRON_MASS * SPEED_OF_LIGHT ** 2) / HBAR * mu;
+    expect(text('photon-emission')).toContain(`A₂₁ = ${(A / 1e8).toFixed(2)} × 10⁸ s⁻¹`);
+    expect(1e9 / A).toBeCloseTo(1.596, 3); // ns, shown rounded as 1.6 ns
+  });
+
+  it('helium cloud radius in the text matches the drawn cloud', () => {
+    const pm = orbitalRadius({ n: 1, l: 0, m: 0 }, 27 / 16) / 1000;
+    expect(text('helium-atom')).toContain(`${pm.toFixed(1)} pm`);
+  });
+
+  it('deuterium gamma ray: E = (M² - m_d²) / 2M with M = m_p + m_n (deuteron recoil included)', () => {
+    const M = mc2Ev(PROTON_MASS) + mc2Ev(NEUTRON_MASS);
+    const md = mc2Ev(DEUTERON_MASS);
+    expect(M - md).toBeCloseTo(2224566, -1); // binding energy, eV
+    const s = loadPreset('deuterium-formation')!;
+    const photon = s.events.map(e => e.particle).find(p => p?.type === 'photon')!;
+    expect(Math.abs(photon.energy! - (M * M - md * md) / (2 * M))).toBeLessThan(2);
   });
 });
 

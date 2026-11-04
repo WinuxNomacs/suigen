@@ -6,7 +6,7 @@
     "summary": "An excited atom relaxes and shoots out a particle of light",
     "sections": {
       "whatsHappening": "This hydrogen atom starts in an excited state — its electron is in a higher energy level (2p) than it wants to be. Nature prefers the lowest energy state, so the electron spontaneously drops back down to the ground state (1s). The excess energy is released as a photon — a particle of light that flies away from the atom.",
-      "whyItMatters": "This is how lasers, LEDs, neon signs and fluorescent lights make light, and why each element glows with its own set of colors, which lets astronomers tell what distant stars are made of. Hot objects such as candle flames and old light bulbs mostly glow for a different reason: heat.",
+      "whyItMatters": "This is how LEDs, neon signs and fluorescent lights make light (lasers use a close relative, stimulated emission, where a passing photon triggers the drop), and why each element glows with its own set of colors, which lets astronomers tell what distant stars are made of. Hot objects such as candle flames and old light bulbs mostly glow for a different reason: heat.",
       "whatToWatch": "Watch the dumbbell-shaped electron cloud (2p orbital) collapse into a sphere (1s orbital). At that moment, a yellow photon appears and flies away with its wave trail. The wait before the drop is fast-forwarded: the timeline shows about 1.6 ns, the average time a 2p electron stays excited.",
       "funFact": "The photon emitted here has a wavelength of 121.6 nanometers: ultraviolet light, invisible to human eyes. This Lyman-alpha line is hydrogen's strongest, yet only four of its lines (the Balmer series) are visible to us."
     }
@@ -20,7 +20,7 @@
       },
       {
         "label": "Spontaneous emission rate",
-        "tex": "A₂₁ = 6.27 × 10⁸ s⁻¹"
+        "tex": "A₂₁ = 6.26 × 10⁸ s⁻¹"
       },
       {
         "label": "Mean lifetime",
@@ -79,7 +79,7 @@
           "y": 0,
           "z": 0
         },
-        "energy": 10.2
+        "energy": 10.1987
       }
     }
   ],

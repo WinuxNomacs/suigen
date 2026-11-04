@@ -8,7 +8,7 @@
       "whatsHappening": "A photon — a tiny packet of light energy — is flying toward a hydrogen atom. When it arrives, the atom absorbs it completely. The photon vanishes, and its energy is transferred to the electron, which jumps to a higher energy level. Watch the electron cloud change shape from a sphere (1s) to a dumbbell (2p).",
       "whyItMatters": "This is the fundamental process behind how things absorb light. It's why leaves are green (they absorb red and blue light), why your skin gets warm in sunlight, and how solar panels generate electricity. Every color you see exists because atoms and molecules absorb specific wavelengths of light.",
       "whatToWatch": "Follow the yellow photon as it approaches from the left. Notice its wave-like trail — light behaves as both a wave and a particle. When it reaches the atom, it disappears and the blue electron cloud quickly changes from a round sphere to an elongated dumbbell shape.",
-      "funFact": "The electron can only absorb a photon with exactly the right energy — 10.2 electron volts in this case. Too much or too little, and the photon passes right through. It's like a vending machine that only accepts exact change!"
+      "funFact": "The atom can only absorb a photon with exactly the right energy to lift the electron to another orbital: 10.2 electron volts in this case. A little too much or too little, and the photon passes right through, like a vending machine that only accepts exact change. A photon with more than 13.6 eV is different: it can knock the electron out of the atom altogether."
     }
   },
   "scientific": {
@@ -78,7 +78,7 @@
           "y": 0,
           "z": 0
         },
-        "energy": 10.2
+        "energy": 10.1987
       }
     },
     {
