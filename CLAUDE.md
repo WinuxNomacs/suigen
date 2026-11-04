@@ -25,7 +25,13 @@ Run `typecheck`, `lint` and `test` before every commit. Tests live next to the c
 
 ## Work tracking
 
-[upcoming-changes.md](upcoming-changes.md) holds the phased fix plan and the decisions made for each item. Check items off and move them to "Done" with their commit hash as they land.
+[upcoming-changes.md](upcoming-changes.md) starts with the phase list (Up next / Then / Later), then each phase's details and decisions. Check items off and move them to "Done" with their commit hash as they land. New requests arrive in `new.md` (untracked): turn them into phases there, then clear it back to its title.
+
+## What a push starts
+
+- Pushing a branch or `main` starts nothing: CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs only for a `v*` tag or by hand, because Actions minutes are limited.
+- Pushing a `v*` tag runs CI: typecheck, lint, tests and web build on three OSes and two Node versions, then packaging on three OSes (macOS runners cost 10x). Nothing is published; `npm run publish` is manual.
+- Dependencies are pinned to exact versions (`.npmrc` has `save-exact=true`); upgrading one is its own tested change.
 
 ## Rules
 
