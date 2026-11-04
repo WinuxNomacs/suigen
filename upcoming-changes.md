@@ -170,6 +170,13 @@ Review requested 2026-11-03 ("I don't need perfect but I don't want to miss mist
 - [ ] **8.7 (Latent)** p orbitals with m = ±1 would be drawn as dumbbells; the real |ψ|² is a ring around the axis. Nothing creates m ≠ 0 yet.
 - [ ] **8.8 (Latent)** Absorption from 2p always picks 3s because d clouds aren't drawn, though 2p → 3d is also allowed. Revisit with d orbitals.
 
+## Phase 9: Timeline controls
+
+Requested 2026-11-04.
+
+- [x] **9.1 Buttons**: reset (start, paused), step back, play/pause, step forward, in that order. The play icon follows the engine state, so reset and scrubbing keep it right.
+- [x] **9.2 Scrubber**: a slider from 0 to the scene's end (`SimulationEngine.getDuration`: the last event, or the last moving particle leaving the scene, solved from its straight path). Dragging pauses playback and resumes it on release. The end grows with sandbox edits or when playing past it.
+
 ---
 
 ## Done

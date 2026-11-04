@@ -300,7 +300,8 @@ body {
 #timeline button:hover { background: #2a2a4e; }
 
 #timeline label { color: #888; font-size: 12px; }
-#time-display { margin-left: auto; font-family: monospace; font-size: 13px; }
+#scrubber { flex: 1; min-width: 80px; accent-color: #4488ff; cursor: pointer; }
+#time-display { font-family: monospace; font-size: 13px; min-width: 16ch; }
 
 /* CSS2D Labels */
 .particle-label {

@@ -152,4 +152,47 @@ describe('SimulationEngine', () => {
     engine.seek(150);
     expect(engine.getRealTime().fs).toBeCloseTo(1.6e6, 3);
   });
+
+  it('duration ends when the last moving particle leaves the scene', () => {
+    const { engine } = setup();
+    const load = (key: string) => {
+      const s = loadPreset(key)!;
+      engine.loadScenario(s.particles, s.events, s.compressions, s.extent);
+      return engine.getDuration();
+    };
+    // Recoil electron from the origin at 0.2472c to 2 × 450,000 fm, starting at tick 120.
+    expect(load('compton-scattering')).toBeCloseTo(120 + 900000 / (5000 * 0.2472), 6);
+    // Emitted photon from the origin at c, starting at tick 150.
+    expect(load('photon-emission')).toBeCloseTo(150 + 900000 / 5000, 6);
+    // Nothing moves after the absorption: the floor is light leaving from the centre.
+    expect(load('photon-absorption')).toBeCloseTo(900000 / 5000, 6);
+  });
+
+  it('nothing changes after the duration', () => {
+    const { pm, engine } = setup();
+    for (const key of ['compton-scattering', 'photon-emission', 'deuterium-formation']) {
+      const s = loadPreset(key)!;
+      engine.loadScenario(s.particles, s.events, s.compressions, s.extent);
+      const end = engine.getDuration();
+      engine.seek(end + 1e-6);
+      const atEnd = pm.snapshot();
+      engine.seek(end * 3);
+      expect(pm.snapshot()).toBe(atEnd);
+      engine.seek(end - 1);
+      expect(pm.snapshot()).not.toBe(atEnd);
+    }
+  });
+
+  it('reset returns to the start and pauses', () => {
+    const { pm, engine } = setup();
+    const s = loadPreset('photon-absorption')!;
+    engine.loadScenario(s.particles, s.events, s.compressions, s.extent);
+    const start = pm.snapshot();
+    engine.play();
+    engine.seek(200);
+    engine.reset();
+    expect(engine.state.time).toBe(0);
+    expect(engine.state.playing).toBe(false);
+    expect(pm.snapshot()).toBe(start);
+  });
 });

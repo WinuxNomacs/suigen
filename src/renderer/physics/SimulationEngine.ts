@@ -86,8 +86,46 @@ export class SimulationEngine {
     this.seek(this.state.time - STEP_TICKS);
   }
 
-  tick(deltaFs: number): void {
-    this.advanceTo(this.state.time + deltaFs * this.state.speed);
+  tick(deltaTicks: number): void {
+    this.advanceTo(this.state.time + deltaTicks * this.state.speed);
+  }
+
+  /** Back to the start, paused. */
+  reset(): void {
+    this.pause();
+    this.seek(0);
+  }
+
+  /**
+   * Ticks until the scene stops changing: the last event, or the last moving particle leaving the
+   * scene (removeDeparted), whichever is later. At least the time light takes to leave from the centre.
+   */
+  getDuration(): number {
+    const limit = 2 * this.extent;
+    let end = limit / LIGHT_SPEED_FM_PER_TICK;
+    const removedAt = new Map<string, number>();
+    for (const e of this.events) {
+      const id = e.action === 'remove' ? e.targetId : e.action === 'absorb' ? e.photonId : undefined;
+      if (id && !removedAt.has(id)) removedAt.set(id, e.time);
+    }
+    const consider = (p: ScenarioParticle | undefined, spawnTime: number) => {
+      if (!p?.direction) return;
+      const pos = p.position ?? { x: 0, y: 0, z: 0 };
+      const d = normalize(p.direction);
+      // Distance s along the path where |pos + s·d| = limit, heading outward.
+      const b = pos.x * d.x + pos.y * d.y + pos.z * d.z;
+      const disc = b * b - (pos.x * pos.x + pos.y * pos.y + pos.z * pos.z - limit * limit);
+      const s = disc >= 0 ? -b + Math.sqrt(disc) : Math.max(0, -b);
+      const exit = spawnTime + s / (LIGHT_SPEED_FM_PER_TICK * (p.speed ?? 1));
+      const removed = p.id === undefined ? undefined : removedAt.get(p.id);
+      end = Math.max(end, Math.min(exit, removed ?? Infinity));
+    };
+    this.initialParticles.forEach(p => consider(p, 0));
+    for (const e of this.events) {
+      end = Math.max(end, e.time);
+      if (e.action === 'spawn' || e.action === 'emit') consider(e.particle, e.time);
+    }
+    return end;
   }
 
   seek(time: number): void {
