@@ -200,6 +200,57 @@ Requested 2026-11-04.
 - [x] **12.1 Default speed 0.25x** (`DEFAULT_PLAYBACK_SPEED`); clicking the readout returns to it. A test ties the slider's starting position and readout in `index.html` to the constant.
 - [x] **12.2 Loop toggle** (looping-arrows button after step forward), on by default: at the end playback restarts from the start, in reverse it wraps from the start to the end, and play at the end starts over. With loop off, phase 11 behavior (stop at the end, play stays put).
 
+
+## Phases 13-16: Sandbox tutorial, ionization scenario, user scenarios
+
+Requested 2026-11-04: a sandbox tutorial showing how a neutron and proton release a photon, user-made scenarios, and a scenario for "the fission of a single hydrogen atom".
+
+Decisions (2026-11-04):
+- **"Hydrogen fission" becomes hydrogen photoionization.** Fission means a heavy nucleus splitting; a hydrogen-1 nucleus is a single proton and cannot split. The user chose ionization: a photon knocks the electron out, leaving a free proton and electron.
+- **Tutorial:** guided steps that highlight each control and advance when the user does the step; skippable, reopenable.
+- **User scenarios:** the scene plus editable text (title, description, optional plain-language and science sections), in the built-in scenario JSON format, checked by the same validator.
+- **Storage:** JSON files (desktop: file dialog; browser: download/upload) plus a "My scenarios" list in the gallery, kept in app storage on this device.
+- Order: 13 (capture physics) must land before 14 (the tutorial needs it). 15 and 16 are independent.
+
+### Phase 13: Neutron capture in the sandbox (needed by the tutorial)
+
+The sandbox has no nuclear physics today: a placed neutron sits still and nothing happens.
+
+- [ ] **13.1 Moving neutrons**: a neutron placed while a free proton exists heads for the nearest one, as photons head for electrons. With no free proton it stays where it is placed, so nuclei can still be built by hand. (Default chosen here; easy to change.)
+- [ ] **13.2 Fast-forwarded approach**: a thermal neutron (2,200 m/s = 7.34 × 10⁻⁶ c) moves 0.037 fm per tick, far too slow to watch, so its approach becomes a labeled compressed span ("thermal neutron approach (2,200 m/s)") with the real time computed from the distance, as in the deuterium scenario.
+- [ ] **13.3 Capture rule**: on reaching a free proton (crossing time solved exactly, like photon absorption), record a new `capture` event: the neutron binds next to the proton and a 2.2232 MeV gamma ray is emitted (binding energy minus the 1.3 keV deuteron recoil, as in phase 8). The gamma direction is chosen once and stored in the event, so replay and rewind are deterministic.
+- [ ] **13.4 Limits shown in the simplifications list**: capture only by a free proton (n + d → tritium and heavier nuclei are not modeled; the neutron passes through); capture is certain here, while a real slow neutron hitting a proton is far more likely to bounce off than be captured (cross-sections to look up and cite during implementation); gamma direction random in reality.
+- [ ] **13.5 Validator and tests**: schema `capture` action; the validator checks the gamma energy against the n-p binding energy and that the target is a free proton; engine tests for capture, rewind before it, and replay.
+
+### Phase 14: Sandbox tutorial
+
+- [ ] **14.1 Step card** in the sandbox panel: (1) place a proton: highlights the p⁺ button, then the floor; (2) place a neutron: it heads for the proton; (3) press play: highlights play; (4) explains what happened (deuteron formed, 2.22 MeV gamma carries the binding energy) and links to the Deuterium Formation scenario.
+- [ ] **14.2 Progress from real actions**: each step completes from engine events (particle placed, capture recorded), not from clicks on the card. Skip button; "Show tutorial" button in the sandbox panel; shown automatically on the first sandbox visit (remembered in browser storage, with a fallback to showing it if storage is unavailable).
+- [ ] **14.3 Checks**: scripted Electron run doing the steps with real mouse input; skip and reopen.
+
+### Phase 15: Hydrogen ionization scenario
+
+Numbers computed 2026-11-04 (CODATA 2022, reduced-mass hydrogen):
+- Threshold: 13.598 eV (91.18 nm, the Lyman limit).
+- Proposed photon: 21.218 eV, the helium resonance line (58.43 nm) that photoelectron spectroscopy lamps use, so the scenario ties to a real lab technique.
+- Electron kinetic energy: 7.620 eV, speed 0.00546 c (27.3 fm per tick). Leaving a 300,000 fm scene takes about 22,000 ticks (0.37 fs of real time), so its departure needs a labeled fast-forward.
+- The proton recoils with the same momentum as the electron (2,791 eV/c) but at 2.97 × 10⁻⁶ c, too slow to see.
+
+- [ ] **15.1 Engine and schema**: `ionize` event (photon, electron, outgoing direction): the electron loses its orbital and leaves as a free particle with speed from its kinetic energy. The validator checks kinetic energy = photon energy - binding energy of the starting level, and that the photon reaches the threshold.
+- [ ] **15.2 Scenario file**: plain-language and science text with every number computed and tested (threshold, wavelength, kinetic energy, speed); electron sent along the light's polarization axis, the most likely direction for a 1s electron (cos² θ distribution). Simplifications: the direction is random in reality; the proton recoil is too slow to draw; the electron's departure is fast-forwarded.
+- [ ] **15.3 Sandbox ionization**: photons above the threshold ionize instead of passing through; add an ionizing energy to the toolbar list. This removes the "Ionization is not modeled" simplification.
+- [ ] **15.4 Tests**: validator cases (photon below threshold, wrong kinetic energy), engine replay and rewind, numbers in the text.
+
+### Phase 16: Saving and opening scenarios
+
+- [ ] **16.1 Format**: user scenarios use the built-in JSON format; the plain-language and science sections become optional for them (built-in presets still must have them, enforced by a test). Exporting from the sandbox writes its particles and recorded events (placements, moves, deletions, absorptions, captures).
+- [ ] **16.2 Save form**: title, description, optional sections, entered in the panel; all text shown back with `textContent` only.
+- [ ] **16.3 Desktop files**: the app's first IPC. The preload exposes exactly two calls, `saveScenario(text, suggestedName)` and `openScenario()`. The main process shows the system save or open dialog (`.json` filter), writes or reads only the chosen file, and refuses files over 1 MB. No other file system access; context isolation and the page security policy stay as they are.
+- [ ] **16.4 Browser files**: download (Blob link) and upload (file picker), same size limit.
+- [ ] **16.5 Opening untrusted files**: parse, then zod schema, then physics validator; on failure, list the problems and load nothing. Opened scenarios appear like presets, with an "Edit in sandbox" button.
+- [ ] **16.6 My scenarios**: saved scenarios listed in the gallery from browser storage (per device, try/catch, works without it); open, edit in sandbox, delete.
+- [ ] **16.7 Tests and checks**: export, re-import and replay give the same scene; malformed, oversized and physics-invalid files are rejected with messages; IPC handlers unit-tested; scripted Electron run of save and open (dialogs stubbed in the test run).
+
 ---
 
 ## Done
