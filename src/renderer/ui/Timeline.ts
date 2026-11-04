@@ -80,8 +80,8 @@ export class Timeline {
     let text = `t ${rt.approximate ? '≈' : '='} ${formatDuration(rt.fs)}`;
     if (rt.activeLabel) text += ` (fast-forward: ${rt.activeLabel})`;
     this.timeDisplay.textContent = text;
-    this.timeDisplay.title = rt.approximate
+    this.timeDisplay.title = `${text}\n${rt.approximate
       ? 'Real elapsed time. Approximate: includes a span that is fast-forwarded.'
-      : 'Real elapsed time.';
+      : 'Real elapsed time.'}`;
   }
 }

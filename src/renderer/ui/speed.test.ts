@@ -24,6 +24,11 @@ describe('playback speed slider', () => {
     for (let p = 0; p <= SPEED_POSITION_MAX; p++) expect(speedToPosition(positionToSpeed(p))).toBe(p);
   });
 
+  it('every readout fits the fixed-width button (7 characters, styles.css #speed-value)', () => {
+    const longest = Math.max(...Array.from({ length: SPEED_POSITION_MAX + 1 }, (_, p) => formatSpeed(positionToSpeed(p)).length));
+    expect(longest).toBe(7);
+  });
+
   it('formats readout and stop labels', () => {
     expect(formatSpeed(1)).toBe('1x');
     expect(formatSpeed(0.025)).toBe('0.025x');

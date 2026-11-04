@@ -300,7 +300,10 @@ body {
 #timeline button:hover { background: #2a2a4e; }
 
 #timeline label { color: #888; font-size: 12px; }
-#scrubber { flex: 1; min-width: 80px; accent-color: #4488ff; cursor: pointer; }
+/* The speed slider and readout never change size, so dragging the speed doesn't shake the bar. The
+   scrubber and time text share any shortage of space (a long fast-forward label is cut with an ellipsis). */
+#timeline > * { flex-shrink: 0; }
+#timeline > #scrubber { flex: 1 1 auto; min-width: 80px; accent-color: #4488ff; cursor: pointer; }
 /* Speed slider with clickable stop labels underneath, centred under the thumb positions. */
 .speed-control { position: relative; width: 320px; padding-bottom: 12px; }
 #speed { width: 100%; margin: 0; accent-color: #4488ff; cursor: pointer; }
@@ -312,8 +315,9 @@ body {
 }
 #timeline .speed-stops button:hover { background: none; color: #ccc; }
 #timeline .speed-stops button.active { color: #4488ff; }
-#timeline #speed-value { min-width: 6ch; padding: 4px 6px; font-family: monospace; font-size: 13px; }
-#time-display { font-family: monospace; font-size: 13px; min-width: 16ch; }
+/* Fixed width for the longest readout, 7 characters ("-0.475x"). */
+#timeline #speed-value { box-sizing: content-box; width: 7ch; padding: 4px 6px; text-align: center; font-family: monospace; font-size: 13px; }
+#timeline > #time-display { flex: 0 1 auto; min-width: 12ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace; font-size: 13px; }
 
 /* CSS2D Labels */
 .particle-label {
