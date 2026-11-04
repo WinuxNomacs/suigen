@@ -244,13 +244,14 @@ Numbers computed 2026-11-04 (CODATA 2022, reduced-mass hydrogen):
 
 ### Phase 16: Saving and opening scenarios
 
-- [ ] **16.1 Format**: user scenarios use the built-in JSON format; the plain-language and science sections become optional for them (built-in presets still must have them, enforced by a test). Exporting from the sandbox writes its particles and recorded events (placements, moves, deletions, absorptions, captures).
-- [ ] **16.2 Save form**: title, description, optional sections, entered in the panel; all text shown back with `textContent` only.
-- [ ] **16.3 Desktop files**: the app's first IPC. The preload exposes exactly two calls, `saveScenario(text, suggestedName)` and `openScenario()`. The main process shows the system save or open dialog (`.json` filter), writes or reads only the chosen file, and refuses files over 1 MB. No other file system access; context isolation and the page security policy stay as they are.
-- [ ] **16.4 Browser files**: download (Blob link) and upload (file picker), same size limit.
-- [ ] **16.5 Opening untrusted files**: parse, then zod schema, then physics validator; on failure, list the problems and load nothing. Opened scenarios appear like presets, with an "Edit in sandbox" button.
-- [ ] **16.6 My scenarios**: saved scenarios listed in the gallery from browser storage (per device, try/catch, works without it); open, edit in sandbox, delete.
-- [ ] **16.7 Tests and checks**: export, re-import and replay give the same scene; malformed, oversized and physics-invalid files are rejected with messages; IPC handlers unit-tested; scripted Electron run of save and open (dialogs stubbed in the test run).
+- [x] **16.1 Format**: user scenarios use the built-in JSON format; the plain-language and science sections become optional for them (built-in presets still must have them, enforced by a test). Exporting from the sandbox writes its particles and recorded events (placements, moves, deletions, absorptions, captures).
+- [x] **16.2 Save form**: title, description, optional sections, entered in the panel; all text shown back with `textContent` only.
+- [x] **16.3 Desktop files**: the app's first IPC. The preload exposes exactly two calls, `saveScenario(text, suggestedName)` and `openScenario()`. The main process shows the system save or open dialog (`.json` filter), writes or reads only the chosen file, and refuses files over 1 MB. No other file system access; context isolation and the page security policy stay as they are.
+- [x] **16.4 Browser files**: download (Blob link) and upload (file picker), same size limit.
+- [x] **16.5 Opening untrusted files**: parse, then zod schema, then physics validator; on failure, list the problems and load nothing. Opened scenarios appear like presets, with an "Edit in sandbox" button.
+- [x] **16.6 My scenarios**: saved scenarios listed in the gallery from browser storage (per device, try/catch, works without it); open, edit in sandbox, delete.
+- [x] **16.7 Tests and checks**: unit tests for the main-process handlers (cancel, size limit before reading, safe default name, write errors, sender checks), file names, storage, parsing, and a full sandbox export → check → reopen → replay. End to end, the built main process and preload run with only the native dialogs replaced by fixed paths (a script cannot click them); the browser path uses the DevTools protocol to answer the file picker.
+- [x] **16.8 Found while building**: (a) the DOM helper set `data-*` attributes through `dataset`, which rejects hyphenated names, so the My scenarios cards threw; it now uses `setAttribute`. (b) Reopened sandbox scenes reuse ids u1, u2, ...; new placements now continue after the highest id in the file. (c) Leaving a particle's details in the sandbox went back to the gallery instead of the sandbox panel.
 
 ---
 

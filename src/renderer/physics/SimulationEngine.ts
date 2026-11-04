@@ -1,4 +1,4 @@
-import { OrbitalState, ScenarioEvent, SimulationState, ParticleData, ParticleType, TimeCompression, Vec3 } from '../../shared/types';
+import { OrbitalState, Scenario, ScenarioEvent, SimulationState, ParticleData, ParticleType, TimeCompression, Vec3 } from '../../shared/types';
 import {
   CAPTURE_DISTANCE_FM, DEFAULT_PLAYBACK_SPEED, DEFAULT_SCENE_EXTENT_FM, ELECTRON_REST_ENERGY_EV, FS_PER_TICK,
   LIGHT_SPEED_FM_PER_TICK, NP_CAPTURE_GAMMA_EV, NUCLEON_SPACING_FM, NUCLEUS_CLUSTER_FM, SPEED_OF_LIGHT,
@@ -71,6 +71,11 @@ export class SimulationEngine {
   ): void {
     this.initialParticles = particles.map((p, i) => ({ ...p, id: p.id ?? `s${i}` }));
     this.events = [...events].sort((a, b) => a.time - b.time);
+    // A reopened sandbox scene already uses ids u1, u2, ...: new placements continue after them.
+    for (const id of [...this.initialParticles.map(p => p.id), ...this.events.flatMap(eventIds)]) {
+      const m = id ? /^u(\d+)/.exec(id) : null;
+      if (m) nextUserId = Math.max(nextUserId, Number(m[1]) + 1);
+    }
     this.compressions = compressions.map(c => ({ ...c })); // sandbox approaches are added to this list
     this.extent = extent;
     this.interactiveIds.clear();
@@ -78,6 +83,20 @@ export class SimulationEngine {
     this.rebuild();
     this.advanceTo(0);
     this.onLoad?.();
+  }
+
+  /**
+   * The scene as scenario data: the starting particles, the whole event log (including the sandbox's
+   * recorded placements, moves, deletions, absorptions, ionizations and captures), the fast-forwarded
+   * spans and the framing. Loading it back replays exactly the same scene.
+   */
+  exportScenarioData(): Pick<Scenario, 'particles' | 'events' | 'compressions' | 'extent'> {
+    return structuredClone({
+      particles: this.initialParticles,
+      events: this.events,
+      compressions: [...this.compressions].sort((a, b) => a.start - b.start),
+      extent: this.extent,
+    });
   }
 
   setOnLoad(cb: () => void): void {
@@ -629,4 +648,8 @@ function randomDirection(): Vec3 {
   const phi = 2 * Math.PI * Math.random();
   const r = Math.sqrt(1 - z * z);
   return { x: r * Math.cos(phi), y: z, z: r * Math.sin(phi) };
+}
+
+function eventIds(e: ScenarioEvent): Array<string | undefined> {
+  return [e.particle?.id, e.targetId, e.photonId, e.electronId, e.neutronId, e.protonId];
 }

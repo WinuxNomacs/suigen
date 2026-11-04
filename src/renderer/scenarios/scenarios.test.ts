@@ -19,6 +19,13 @@ describe('bundled scenarios', () => {
   it.each(Object.keys(RAW_PRESETS))('%s is valid', key => {
     expect(problemsOf(RAW_PRESETS[key])).toEqual([]);
   });
+
+  it.each(Object.keys(RAW_PRESETS))('%s has every plain-language and science section (optional only for user scenarios)', key => {
+    const s = loadPreset(key)!;
+    expect(Object.keys(s.layman!.sections).sort()).toEqual(['funFact', 'whatToWatch', 'whatsHappening', 'whyItMatters']);
+    expect(s.scientific!.narrative.length).toBeGreaterThan(0);
+    expect(s.scientific!.equations.length).toBeGreaterThan(0);
+  });
 });
 
 describe('scenario validation catches mistakes', () => {

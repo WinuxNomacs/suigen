@@ -73,21 +73,22 @@ const text = z.string().min(1);
 export const ScenarioSchema = z.strictObject({
   name: text,
   description: text,
+  // Optional so user scenarios can omit them; built-in presets must have every field (scenarios.test.ts).
   layman: z.strictObject({
     title: text,
     summary: text,
     sections: z.strictObject({
-      whatsHappening: text,
-      whyItMatters: text,
-      whatToWatch: text,
-      funFact: text,
+      whatsHappening: text.optional(),
+      whyItMatters: text.optional(),
+      whatToWatch: text.optional(),
+      funFact: text.optional(),
     }),
-  }),
+  }).optional(),
   scientific: z.strictObject({
     narrative: text,
     equations: z.array(z.strictObject({ label: text, tex: text })),
     constants: z.array(text),
-  }),
+  }).optional(),
   particles: z.array(particle),
   events: z.array(event),
   compressions: z.array(compression).optional(),

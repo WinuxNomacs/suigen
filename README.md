@@ -56,11 +56,12 @@ The requirements below describe where the project is heading. This is what exist
 
 | Area | Built | Not yet |
 |---|---|---|
-| Scenarios | Seven presets (hydrogen, helium, photon absorption and emission, hydrogen ionization, Compton scattering, deuterium formation), each with plain-language and scientific explanations, checked by a validator and tests | Loading or saving your own scenario files |
+| Scenarios | Seven presets (hydrogen, helium, photon absorption and emission, hydrogen ionization, Compton scattering, deuterium formation), each with plain-language and scientific explanations, checked by a validator and tests | |
+| Your scenarios | Save the sandbox scene with a name, description and optional text as a JSON file (desktop: system dialog; browser: download), reopen it (checked like the built-in ones), edit it in the sandbox; recent ones listed under My scenarios in the gallery | Sharing online |
 | Sandbox | Place, select, drag (a nucleus moves with its clouds) and delete protons, neutrons, electrons and photons; edits are undone by rewinding; a photon is absorbed when its energy matches a hydrogen transition; a neutron heads for a free proton and forms a deuteron, releasing a 2.22 MeV gamma ray; a guided tutorial on the first visit walks through it | Editing particle properties (energy, orbital) |
 | Timeline | Reset, step back, play/pause, step forward, loop (on by default); a slider to drag through the scene (it spans from the start until the last particle leaves, and playback stops there); playback speed from -2x (reverse) to 2x, 0.25x by default, with stops at 0.25x, 0.5x and 1x each way and 0.025x steps near 0; real elapsed time | |
 | Physics | Hydrogen energy levels and absorption/emission rules (s and p, up to n = 4); photoionization with the electron's share of the energy; neutron capture by a free proton; electron clouds sized from the hydrogen radial probability; real elapsed time | Forces (Coulomb, nuclear), field visualization, Pauli and uncertainty enforcement, d and f orbitals |
-| Architecture | All logic in the renderer; the main process opens the window | Worker threads, IPC, save/export |
+| Architecture | All logic in the renderer; the main process opens the window and saves/opens scenario files through the system dialog (two IPC calls, nothing else) | Worker threads |
 | Accuracy | Every simplification is listed in the app's science panel | Measurement tools |
 
 Ongoing work is tracked in [upcoming-changes.md](upcoming-changes.md).

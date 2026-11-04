@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ELECTRON_DEPARTURE_LABEL, NEUTRON_APPROACH_LABEL, SimulationEngine, electronSpeed } from './SimulationEngine';
 import { FakeParticleManager } from '../../test/FakeParticleManager';
 import { loadPreset } from '../scenarios/ScenarioLoader';
+import { buildScenario, parseScenarioText, serializeScenario } from '../scenarios/userScenarios';
 import { ScenarioEvent } from '../../shared/types';
 import { NP_CAPTURE_GAMMA_EV, NUCLEON_SPACING_FM, SPEED_OF_LIGHT_FM_PER_FS } from '../../shared/constants';
 import { ionizationKineticEnergy } from './transitions';
@@ -481,6 +482,47 @@ describe('SimulationEngine', () => {
       engine.seek(30);
       const fs = engine.getRealTime().fs;
       expect(pm.getParticle('m')!.data.position.x).toBeCloseTo(v * SPEED_OF_LIGHT_FM_PER_FS * fs, 6);
+    });
+  });
+
+  describe('export and reopen', () => {
+    it('a sandbox scene saved and reopened replays the same, and passes the checks', () => {
+      const a = setup();
+      a.engine.loadScenario([], []);
+      a.engine.addUserParticle('proton', { x: 0, y: 0, z: 0 });
+      a.engine.addUserParticle('electron', { x: 0, y: 0, z: 0 }, { orbital: { n: 1, l: 0, m: 0 } });
+      a.engine.addUserParticle('photon', { x: -400000, y: 0, z: 0 }, { direction: { x: 1, y: 0, z: 0 }, energy: 10.1987 });
+      a.engine.addUserParticle('proton', { x: 0, y: 0, z: 500000 });
+      a.engine.addUserNeutron({ x: 200000, y: 0, z: 500000 });
+      a.engine.seek(30);
+      const atom2 = a.pm.getAllParticles().find(p => p.type === 'proton' && p.position.z === 500000)!;
+      a.engine.moveParticles([{ id: atom2.id, position: { x: 0, y: 0, z: 500000 } }]);
+      a.engine.seek(150);
+      a.engine.addUserParticle('photon', { x: -400000, y: 0, z: 0 }, { direction: { x: 1, y: 0, z: 0 }, energy: 21.218 });
+      a.engine.seek(400);
+      const final = a.pm.snapshot();
+
+      const json = serializeScenario(buildScenario(a.engine.exportScenarioData(), { name: 'Round trip', description: 'All actions' }));
+      const parsed = parseScenarioText(json);
+      expect(parsed).toMatchObject({ ok: true });
+      if (!('scenario' in parsed)) return;
+      const actions = parsed.scenario.events.map(e => e.action);
+      expect(actions).toEqual(expect.arrayContaining(['spawn', 'absorb', 'capture', 'move', 'ionize']));
+
+      const b = setup();
+      b.engine.loadScenario(parsed.scenario.particles, parsed.scenario.events, parsed.scenario.compressions, parsed.scenario.extent);
+      b.engine.seek(400);
+      expect(b.pm.snapshot()).toBe(final);
+      expect(b.engine.getRealTime().fs).toBeCloseTo(a.engine.getRealTime().fs, 9);
+    });
+
+    it('new placements after reopening do not reuse ids from the file', () => {
+      const { pm, engine } = setup();
+      engine.loadScenario([], [{ time: 0, action: 'spawn', particle: { id: 'u999', type: 'proton', position: { x: 0, y: 0, z: 0 } } }]);
+      engine.addUserParticle('proton', { x: 100, y: 0, z: 0 });
+      const ids = pm.getAllParticles().map(p => p.id);
+      expect(new Set(ids).size).toBe(2);
+      expect(ids).toContain('u1000');
     });
   });
 });

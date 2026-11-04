@@ -5,6 +5,10 @@ import { formatEnergy } from '../particles/ParticleLabels';
 import { SPEED_OF_LIGHT } from '../../shared/constants';
 import { Child, h } from './dom';
 import { Tutorial, tutorialSeen } from './Tutorial';
+import {
+  MyScenarios, ScenarioText, buildScenario, parseScenarioText, serializeScenario, textOf,
+} from '../scenarios/userScenarios';
+import { openScenarioFile, saveScenarioFile } from '../files';
 
 type PanelMode = 'gallery' | 'description' | 'particle';
 
@@ -60,6 +64,11 @@ export class InfoPanel {
   private engine: SimulationEngine;
   private mode: PanelMode = 'gallery';
   private currentScenario: Scenario | null = null;
+  private currentIsUser = false; // opened from a file or My scenarios: offers "Edit in sandbox"
+  private inSandbox = false;
+  private sandboxBase: Scenario | null = null; // the user scenario being edited, if any (prefills the save form)
+  private galleryMessage: HTMLElement | null = null; // problems from the last file opened
+  private myScenarios = new MyScenarios();
   private onLeaveParticle?: () => void;
 
   private tutorial: Tutorial;
@@ -70,7 +79,7 @@ export class InfoPanel {
     this.tutorial = new Tutorial(
       () => engine.tutorialFacts(),
       () => this.openPreset('deuterium-formation'),
-      () => { if (this.mode === 'description' && !this.currentScenario) this.renderDescription(null); },
+      () => { if (this.mode === 'description' && this.inSandbox) this.renderSandbox(); },
     );
     this.renderGallery();
   }
@@ -82,10 +91,28 @@ export class InfoPanel {
 
   private openPreset(key: string): void {
     const scenario = loadPreset(key);
-    if (!scenario) return;
+    if (scenario) this.openScenario(scenario, false);
+  }
+
+  private openScenario(scenario: Scenario, isUser: boolean): void {
     this.tutorial.stop(false);
     this.engine.loadScenario(scenario.particles, scenario.events, scenario.compressions, scenario.extent);
-    this.renderDescription(scenario);
+    this.renderDescription(scenario, isUser);
+  }
+
+  private openSandbox(base: Scenario | null): void {
+    this.sandboxBase = base;
+    if (base) this.engine.loadScenario(base.particles, base.events, base.compressions, base.extent);
+    else this.engine.loadScenario([], []);
+    if (!base && !tutorialSeen()) this.tutorial.start(); // first visit
+    this.renderSandbox();
+  }
+
+  /** Back from a particle's details: to whatever the panel showed before. */
+  private renderCurrent(): void {
+    if (this.inSandbox) this.renderSandbox();
+    else if (this.currentScenario) this.renderDescription(this.currentScenario, this.currentIsUser);
+    else this.renderGallery();
   }
 
   /** Called when the particle view is closed from inside the panel (back button). */
@@ -104,13 +131,8 @@ export class InfoPanel {
       h('div', { class: 'card-summary' }, summary),
     );
     card.addEventListener('click', () => {
-      if (key === 'sandbox') {
-        this.engine.loadScenario([], []);
-        if (!tutorialSeen()) this.tutorial.start(); // first visit
-        this.renderDescription(null);
-        return;
-      }
-      this.openPreset(key);
+      if (key === 'sandbox') this.openSandbox(null);
+      else this.openPreset(key);
     });
     return card;
   }
@@ -125,77 +147,227 @@ export class InfoPanel {
     this.tutorial.stop(false);
     this.mode = 'gallery';
     this.currentScenario = null;
-    const cards = Object.entries(getPresets()).map(([key, s]) => this.card(key, s.name, s.layman.title, s.layman.summary));
+    this.inSandbox = false;
+    const cards = Object.entries(getPresets()).map(([key, s]) => this.card(key, s.name, s.layman?.title ?? s.name, s.layman?.summary ?? s.description));
+
+    const open = h('button', { class: 'panel-btn', id: 'open-scenario-file' }, 'Open scenario file\u2026');
+    open.addEventListener('click', () => void this.openFromFile());
+
     this.show(
       h('h3', {}, 'Explore'),
       h('div', { class: 'scenario-gallery' }, ...cards),
       this.card('sandbox', 'Sandbox', 'Free Exploration', 'Place particles freely and watch them interact', 'sandbox-card'),
+      h('h3', {}, 'My scenarios'),
+      this.galleryMessage,
+      this.myScenarioList(),
+      open,
     );
   }
 
-  private renderDescription(scenario: Scenario | null): void {
-    this.mode = 'description';
-    this.currentScenario = scenario;
-    const back = this.backButton('back-to-gallery', '\u2190 Scenarios', () => this.renderGallery());
-
-    if (!scenario) {
-      let tutorialArea: HTMLElement = this.tutorial.element;
-      if (!this.tutorial.isActive()) {
-        tutorialArea = h('button', { class: 'tutorial-open', id: 'tutorial-open' }, 'Show tutorial: make a deuteron');
-        tutorialArea.addEventListener('click', () => {
-          this.engine.loadScenario([], []);
-          this.tutorial.start();
-          this.renderDescription(null);
-        });
-      }
-      this.show(
-        back,
-        h('h3', {}, 'Sandbox Mode'),
-        tutorialArea,
-        h('p', { class: 'hint' }, 'Select a particle type from the toolbar, then click in the viewport to place it.'),
-        h('p', { class: 'hint' }, 'Electrons settle around the nearest proton. Photons fly toward the nearest electron with the energy chosen under the \u03b3 button. Neutrons head for the nearest free proton and bind to it, releasing a gamma ray.'),
-        h('p', { class: 'hint' }, 'An electron absorbs a photon only if its energy matches a jump to a higher orbital (10.2 eV takes 1s to 2p). A photon with more than the binding energy (13.6 eV from 1s; try 21.2 eV) frees the electron instead. Otherwise the photon passes straight through.'),
-        simplifications(SANDBOX_SIMPLIFICATIONS),
+  private myScenarioList(): HTMLElement {
+    if (!this.myScenarios.available()) {
+      return h('p', { class: 'hint' }, 'Browser storage is not available, so saved scenarios can only be reopened from their files.');
+    }
+    const entries = this.myScenarios.list();
+    if (entries.length === 0) {
+      return h('p', { class: 'hint', id: 'my-scenarios-empty' }, 'Scenarios you save from the sandbox appear here (kept in this browser on this device).');
+    }
+    return h('div', { class: 'scenario-gallery', id: 'my-scenarios' }, ...entries.map(entry => {
+      // Stored text is checked again on every read: storage can be edited outside the app.
+      const result = parseScenarioText(entry.text);
+      const scenario = 'scenario' in result ? result.scenario : null;
+      const del = h('button', { class: 'card-delete', title: 'Remove from My scenarios' }, '\u00d7');
+      del.addEventListener('click', e => {
+        e.stopPropagation();
+        this.myScenarios.remove(entry.id);
+        this.renderGallery();
+      });
+      const card = h('div', { class: 'scenario-card user-card', 'data-user-scenario': entry.id },
+        del,
+        h('div', { class: 'card-name' }, scenario ? scenario.name : 'Invalid scenario'),
+        h('div', { class: 'card-summary' }, scenario
+          ? scenario.description
+          : `Fails the checks: ${'problems' in result ? result.problems[0] : ''}`),
+        h('div', { class: 'card-date' }, `Saved ${new Date(entry.savedAt).toLocaleString()}`),
       );
+      if (scenario) card.addEventListener('click', () => this.openScenario(scenario, true));
+      return card;
+    }));
+  }
+
+  private async openFromFile(): Promise<void> {
+    const result = await openScenarioFile();
+    if (!result.ok) {
+      if (result.reason === 'canceled') return;
+      this.showGalleryProblems('The file could not be opened', [
+        result.reason === 'too-large' ? 'It is larger than 1 MB.' : result.message ?? 'Unknown error.',
+      ]);
       return;
     }
+    const parsed = parseScenarioText(result.text);
+    if (!('scenario' in parsed)) {
+      this.showGalleryProblems(`${result.fileName} was not loaded: it fails the checks`, parsed.problems);
+      return;
+    }
+    this.galleryMessage = null;
+    this.myScenarios.add(serializeScenario(parsed.scenario));
+    this.openScenario(parsed.scenario, true);
+  }
 
-    const sec = scenario.layman.sections;
-    const section = (title: string, text: string, open = false) => {
+  private showGalleryProblems(title: string, problems: string[]): void {
+    this.galleryMessage = h('div', { class: 'problems', id: 'open-problems' },
+      h('strong', {}, title),
+      h('ul', {}, ...problems.slice(0, 20).map(p => h('li', {}, p))),
+      problems.length > 20 && h('p', {}, `and ${problems.length - 20} more`),
+    );
+    this.renderGallery();
+  }
+
+  private renderSandbox(): void {
+    this.mode = 'description';
+    this.currentScenario = null;
+    this.inSandbox = true;
+    const back = this.backButton('back-to-gallery', '\u2190 Scenarios', () => this.renderGallery());
+    let tutorialArea: HTMLElement = this.tutorial.element;
+    if (!this.tutorial.isActive()) {
+      tutorialArea = h('button', { class: 'tutorial-open', id: 'tutorial-open' }, 'Show tutorial: make a deuteron');
+      tutorialArea.addEventListener('click', () => {
+        this.sandboxBase = null;
+        this.engine.loadScenario([], []);
+        this.tutorial.start();
+        this.renderSandbox();
+      });
+    }
+    const save = h('button', { class: 'panel-btn', id: 'save-scenario' }, 'Save as scenario\u2026');
+    const formArea = h('div', { id: 'save-area' });
+    save.addEventListener('click', () => formArea.replaceChildren(this.saveForm(formArea)));
+    this.show(
+      back,
+      h('h3', {}, this.sandboxBase ? `Sandbox: editing \u201c${this.sandboxBase.name}\u201d` : 'Sandbox Mode'),
+      tutorialArea,
+      h('p', { class: 'hint' }, 'Select a particle type from the toolbar, then click in the viewport to place it.'),
+      h('p', { class: 'hint' }, 'Electrons settle around the nearest proton. Photons fly toward the nearest electron with the energy chosen under the \u03b3 button. Neutrons head for the nearest free proton and bind to it, releasing a gamma ray.'),
+      h('p', { class: 'hint' }, 'An electron absorbs a photon only if its energy matches a jump to a higher orbital (10.2 eV takes 1s to 2p). A photon with more than the binding energy (13.6 eV from 1s; try 21.2 eV) frees the electron instead. Otherwise the photon passes straight through.'),
+      save,
+      formArea,
+      simplifications(SANDBOX_SIMPLIFICATIONS),
+    );
+  }
+
+  /** Name and description are required; the plain-language and science sections are optional. */
+  private saveForm(area: HTMLElement): HTMLElement {
+    const start = textOf(this.sandboxBase);
+    const field = (key: keyof ScenarioText, label: string, multiline: boolean, required = false) => {
+      const input = multiline ? h('textarea', { rows: '3' }) as HTMLTextAreaElement : h('input', { type: 'text' }) as HTMLInputElement;
+      input.id = `save-${key}`;
+      input.value = start[key] ?? '';
+      if (required) input.required = true;
+      return { key, input, row: h('label', { class: 'form-row' }, h('span', {}, required ? `${label} (required)` : label), input) };
+    };
+    const fields = [
+      field('name', 'Name', false, true),
+      field('description', 'Description', false, true),
+      field('whatsHappening', "What's happening", true),
+      field('whyItMatters', 'Why it matters', true),
+      field('whatToWatch', 'What to watch', true),
+      field('funFact', 'Fun fact', true),
+      field('science', 'Science notes', true),
+    ];
+    const status = h('div', { class: 'form-status', id: 'save-status' });
+    const submit = h('button', { class: 'panel-btn', id: 'save-submit', type: 'submit' }, window.suigenFiles ? 'Save\u2026' : 'Download file');
+    const cancel = h('button', { class: 'panel-btn', type: 'button', id: 'save-cancel' }, 'Cancel');
+    cancel.addEventListener('click', () => area.replaceChildren());
+    const form = h('form', { class: 'save-form', id: 'save-form' },
+      ...fields.map(f => f.row),
+      h('p', { class: 'hint' }, 'Saves the scene from the start: every particle, placement, move and deletion, and what happened to them.'),
+      h('div', { class: 'form-actions' }, submit, cancel),
+      status,
+    ) as HTMLFormElement;
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const text = Object.fromEntries(fields.map(f => [f.key, f.input.value])) as unknown as ScenarioText;
+      if (!text.name.trim() || !text.description.trim()) {
+        status.textContent = 'A name and a description are required.';
+        return;
+      }
+      const scenario = buildScenario(this.engine.exportScenarioData(), text);
+      const json = serializeScenario(scenario);
+      const check = parseScenarioText(json); // the same checks a reopened file goes through
+      if (!('scenario' in check)) {
+        status.replaceChildren(h('strong', {}, 'Not saved: the scene fails the checks'), h('ul', {}, ...check.problems.map(p => h('li', {}, p))));
+        return;
+      }
+      const kept = this.myScenarios.add(json);
+      const saved = await saveScenarioFile(json, scenario.name);
+      const parts: string[] = [];
+      if (saved.ok) parts.push(`Saved ${saved.fileName}.`);
+      else if (saved.reason === 'canceled') parts.push('No file saved.');
+      else parts.push(`The file was not saved: ${saved.reason === 'too-large' ? 'larger than 1 MB' : saved.message ?? saved.reason}.`);
+      parts.push(kept.ok ? 'Kept in My scenarios.' : kept.message);
+      status.textContent = parts.join(' ');
+      this.sandboxBase = scenario;
+    });
+    return form;
+  }
+
+  private renderDescription(scenario: Scenario, isUser = false): void {
+    this.mode = 'description';
+    this.currentScenario = scenario;
+    this.currentIsUser = isUser;
+    this.inSandbox = false;
+    const back = this.backButton('back-to-gallery', '\u2190 Scenarios', () => this.renderGallery());
+
+    const sec = scenario.layman?.sections ?? {};
+    const section = (title: string, text: string | undefined, open = false) => {
+      if (!text) return null;
       const d = h('details', {}, h('summary', {}, title), h('p', {}, text));
       (d as HTMLDetailsElement).open = open;
       return d;
     };
 
-    const science = h('div', { class: 'science-content', id: 'science-content' },
-      h('p', { class: 'sci-narrative' }, scenario.scientific.narrative),
-      h('div', { class: 'sci-equations' }, ...scenario.scientific.equations.map(eq =>
-        h('div', { class: 'equation' },
-          h('span', { class: 'eq-label' }, `${eq.label}:`),
-          ' ',
-          h('span', { class: 'eq-tex' }, eq.tex),
+    let toggle: HTMLElement | null = null;
+    let science: HTMLElement | null = null;
+    const sci = scenario.scientific;
+    if (sci) {
+      science = h('div', { class: 'science-content', id: 'science-content' },
+        h('p', { class: 'sci-narrative' }, sci.narrative),
+        sci.equations.length > 0 && h('div', { class: 'sci-equations' }, ...sci.equations.map(eq =>
+          h('div', { class: 'equation' },
+            h('span', { class: 'eq-label' }, `${eq.label}:`),
+            ' ',
+            h('span', { class: 'eq-tex' }, eq.tex),
+          ),
+        )),
+        sci.constants.length > 0 && h('div', { class: 'sci-constants' },
+          h('strong', {}, 'Constants:'),
+          h('ul', {}, ...sci.constants.map(c => h('li', {}, c))),
         ),
-      )),
-      h('div', { class: 'sci-constants' },
-        h('strong', {}, 'Constants:'),
-        h('ul', {}, ...scenario.scientific.constants.map(c => h('li', {}, c))),
-      ),
-    );
-    science.style.display = 'none';
+      );
+      science.style.display = 'none';
+      const content = science;
+      const button = h('button', { class: 'toggle-science', id: 'toggle-science' }, 'Show Science \u25BC');
+      button.addEventListener('click', () => {
+        const showing = content.style.display !== 'none';
+        content.style.display = showing ? 'none' : 'block';
+        button.textContent = showing ? 'Show Science \u25BC' : 'Hide Science \u25B2';
+      });
+      toggle = button;
+    }
 
-    const toggle = h('button', { class: 'toggle-science', id: 'toggle-science' }, 'Show Science \u25BC');
-    toggle.addEventListener('click', () => {
-      const showing = science.style.display !== 'none';
-      science.style.display = showing ? 'none' : 'block';
-      toggle.textContent = showing ? 'Show Science \u25BC' : 'Hide Science \u25B2';
-    });
+    let edit: HTMLElement | null = null;
+    if (isUser) {
+      edit = h('button', { class: 'panel-btn', id: 'edit-in-sandbox' }, 'Edit in sandbox');
+      edit.addEventListener('click', () => this.openSandbox(scenario));
+    }
 
     this.show(
       back,
       h('div', { class: 'desc-header' },
-        h('div', { class: 'desc-title' }, scenario.layman.title),
-        h('div', { class: 'desc-summary' }, scenario.layman.summary),
+        h('div', { class: 'desc-title' }, scenario.layman?.title ?? scenario.name),
+        h('div', { class: 'desc-summary' }, scenario.layman?.summary ?? scenario.description),
       ),
+      isUser && h('p', { class: 'hint' }, 'A user-made scenario. It passed the same checks as the built-in ones.'),
+      edit,
       h('div', { class: 'desc-sections' },
         section("What's happening", sec.whatsHappening, true),
         section('Why it matters', sec.whyItMatters),
@@ -219,8 +391,7 @@ export class InfoPanel {
     this.show(
       this.backButton('back-to-desc', '\u2190 Description', () => {
         this.onLeaveParticle?.();
-        if (this.currentScenario) this.renderDescription(this.currentScenario);
-        else this.renderGallery();
+        this.renderCurrent();
       }),
       h('h3', {}, 'Particle'),
       h('p', {}, h('strong', {}, p.type)),
@@ -238,8 +409,7 @@ export class InfoPanel {
 
   clearSelection(): void {
     if (this.mode === 'particle') {
-      if (this.currentScenario) this.renderDescription(this.currentScenario);
-      else this.renderGallery();
+      this.renderCurrent();
     }
   }
 }

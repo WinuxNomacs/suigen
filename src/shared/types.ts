@@ -47,11 +47,12 @@ export interface ScenarioEvent {
 export interface LaymanDescription {
   title: string;
   summary: string;
+  // Built-in presets have all four (a test enforces it); user scenarios may leave any out.
   sections: {
-    whatsHappening: string;
-    whyItMatters: string;
-    whatToWatch: string;
-    funFact: string;
+    whatsHappening?: string;
+    whyItMatters?: string;
+    whatToWatch?: string;
+    funFact?: string;
   };
 }
 
@@ -77,8 +78,9 @@ export interface TimeCompression {
 export interface Scenario {
   name: string;
   description: string;
-  layman: LaymanDescription;
-  scientific: ScientificDescription;
+  /** Optional for user scenarios; built-in presets always have both. */
+  layman?: LaymanDescription;
+  scientific?: ScientificDescription;
   particles: Array<Partial<ParticleData> & { type: ParticleType }>;
   events: ScenarioEvent[];
   /** Real durations stood in for by compressed tick spans (see physics/time.ts). */

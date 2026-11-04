@@ -41,12 +41,6 @@
               "minLength": 1
             }
           },
-          "required": [
-            "whatsHappening",
-            "whyItMatters",
-            "whatToWatch",
-            "funFact"
-          ],
           "additionalProperties": false
         }
       },
@@ -1044,8 +1038,6 @@
   "required": [
     "name",
     "description",
-    "layman",
-    "scientific",
     "particles",
     "events"
   ],

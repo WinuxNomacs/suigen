@@ -17,7 +17,7 @@ Run `typecheck`, `lint` and `test` before every commit. Tests live next to the c
 
 ## Layout
 
-- [src/main/](src/main/): Electron main process (opens one window) and an empty preload. No IPC.
+- [src/main/](src/main/): Electron main process (opens the window) and the preload. The only IPC is saving and opening a scenario file (`scenarioFiles.ts`: system dialog, `.json` only, 1 MB limit, top frame of an app window only); the preload exposes just those two calls as `window.suigenFiles`. Keep it that narrow.
 - [src/renderer/](src/renderer/): everything else. `physics/SimulationEngine.ts` replays a timed event list (the scene depends only on the starting particles, the events and the time; rewinding replays from zero). `physics/transitions.ts` holds the only physics rules. `particles/` draws particles, clouds and trails. `ui/` holds the toolbar, timeline and info panel.
 - [src/shared/](src/shared/): types and physical constants (CODATA values in `constants.ts`).
 - [scenarios/](scenarios/): preset JSON, bundled at build time through `scenarios/ScenarioLoader.ts`, which validates each one (zod schema in `src/shared/scenarioSchema.ts`, physics checks in `renderer/scenarios/validateScenario.ts`). Each has plain-language text (`layman`), a science panel (`scientific`), starting `particles`, timed `events` (in animation ticks), optional `compressions` (fast-forwarded spans) and `simplifications`.
