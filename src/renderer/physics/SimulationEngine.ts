@@ -76,15 +76,15 @@ export class SimulationEngine {
     this.onEvent = cb;
   }
 
-  /** Starts playback. At the end (or at the start when playing in reverse) it starts over from the other end. */
+  /**
+   * Continues playback from the current time; it never moves the playhead. At the end (or at the start
+   * when the speed is negative) there is nothing to play, so it stays paused: use reset or the scrubber.
+   */
   play(): void {
-    const end = this.getDuration();
-    if (this.state.speed > 0 && this.state.time >= end) this.seek(0);
-    else if (this.state.speed < 0 && this.state.time <= 0) this.seek(end);
+    if (this.state.speed > 0 && this.state.time >= this.getDuration()) return;
+    if (this.state.speed < 0 && this.state.time <= 0) return;
     this.state.playing = true;
   }
-  /** Continues playback from where it is (after a scrub), without starting over. */
-  resume(): void { this.state.playing = true; }
   pause(): void { this.state.playing = false; }
   togglePlay(): void {
     if (this.state.playing) this.pause();
@@ -101,8 +101,9 @@ export class SimulationEngine {
     this.seek(this.state.time - STEP_TICKS);
   }
 
-  /** Advances playback by `deltaTicks` at the current speed and pauses on reaching either end. */
+  /** Advances playback by `deltaTicks` at the current speed and pauses on reaching either end. No-op while paused. */
   tick(deltaTicks: number): void {
+    if (!this.state.playing) return;
     const dt = deltaTicks * this.state.speed;
     if (dt === 0) return;
     let target = this.state.time + dt;

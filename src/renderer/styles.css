@@ -302,7 +302,7 @@ body {
 #timeline label { color: #888; font-size: 12px; }
 #scrubber { flex: 1; min-width: 80px; accent-color: #4488ff; cursor: pointer; }
 /* Speed slider with clickable stop labels underneath, centred under the thumb positions. */
-.speed-control { position: relative; width: 240px; padding-bottom: 12px; }
+.speed-control { position: relative; width: 320px; padding-bottom: 12px; }
 #speed { width: 100%; margin: 0; accent-color: #4488ff; cursor: pointer; }
 .speed-stops { position: absolute; left: 8px; right: 8px; bottom: -2px; height: 12px; }
 #timeline .speed-stops button {

@@ -35,6 +35,7 @@ describe('SimulationEngine', () => {
     const s = loadPreset('compton-scattering')!;
     a.engine.loadScenario(s.particles, s.events, s.compressions, s.extent);
     b.engine.loadScenario(s.particles, s.events, s.compressions, s.extent);
+    a.engine.play();
     for (let i = 0; i < 300; i++) a.engine.tick(0.5);
     b.engine.seek(150);
     expect(a.pm.snapshot()).toBe(b.pm.snapshot());
@@ -196,7 +197,7 @@ describe('SimulationEngine', () => {
     expect(pm.snapshot()).toBe(start);
   });
 
-  it('playback pauses at the end and play starts over', () => {
+  it('playback pauses at the end; play there stays put until reset', () => {
     const { pm, engine } = setup();
     const s = loadPreset('photon-emission')!;
     engine.loadScenario(s.particles, s.events, s.compressions, s.extent);
@@ -208,8 +209,36 @@ describe('SimulationEngine', () => {
     expect(engine.state.playing).toBe(false);
     expect(pm.getAllParticles().some(p => p.type === 'photon')).toBe(false); // departed by the end
     engine.play();
+    expect(engine.state.time).toBe(end);
+    expect(engine.state.playing).toBe(false);
+    engine.setSpeed(-1); // reversing from the end works
+    engine.play();
+    expect(engine.state.playing).toBe(true);
+    engine.reset();
     expect(engine.state.time).toBe(0);
     expect(pm.snapshot()).toBe(start);
+  });
+
+  it('play continues from the current time after pausing or changing speed', () => {
+    const a = setup();
+    const b = setup();
+    const s = loadPreset('compton-scattering')!;
+    a.engine.loadScenario(s.particles, s.events, s.compressions, s.extent);
+    b.engine.loadScenario(s.particles, s.events, s.compressions, s.extent);
+    a.engine.play();
+    for (let i = 0; i < 50; i++) a.engine.tick(2); // t = 100
+    a.engine.pause();
+    a.engine.tick(50); // paused: no change
+    a.engine.setSpeed(0.25);
+    a.engine.play();
+    expect(a.engine.state.time).toBe(100);
+    for (let i = 0; i < 40; i++) a.engine.tick(2); // +20 at 0.25x
+    a.engine.setSpeed(-0.5); // change while playing
+    expect(a.engine.state.time).toBe(120);
+    for (let i = 0; i < 10; i++) a.engine.tick(2); // -10
+    b.engine.seek(110);
+    expect(a.engine.state.time).toBeCloseTo(110, 9);
+    expect(a.pm.snapshot()).toBe(b.pm.snapshot());
   });
 
   it('reverse playback matches seeking and stops at the start', () => {

@@ -1,6 +1,6 @@
 import { SimulationEngine } from '../physics/SimulationEngine';
 import { formatDuration } from '../physics/time';
-import { SPEED_POSITION_MAX, SPEED_STOPS, formatSpeed, positionToSpeed, speedToPosition } from './speed';
+import { SPEED_POSITION_MAX, SPEED_STOPS, formatSpeed, formatStop, positionToSpeed, speedToPosition } from './speed';
 
 const PLAY = '▶';
 const PAUSE = '⏸';
@@ -30,7 +30,7 @@ export class Timeline {
     this.speedValue = document.getElementById('speed-value') as HTMLButtonElement;
     const stops = SPEED_STOPS.map(speed => {
       const b = document.createElement('button');
-      b.textContent = speed === 0 ? '0' : formatSpeed(speed);
+      b.textContent = formatStop(speed);
       b.title = `Set speed to ${formatSpeed(speed)}`;
       b.style.left = `${(speedToPosition(speed) / SPEED_POSITION_MAX) * 100}%`;
       b.addEventListener('click', () => applySpeed(speed));
@@ -57,7 +57,7 @@ export class Timeline {
     const endScrub = () => {
       if (!this.scrubbing) return;
       this.scrubbing = false;
-      if (this.resumeAfterScrub) engine.resume();
+      if (this.resumeAfterScrub) engine.play();
     };
     this.scrubber.addEventListener('pointerup', endScrub);
     this.scrubber.addEventListener('pointercancel', endScrub);

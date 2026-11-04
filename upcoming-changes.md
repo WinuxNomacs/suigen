@@ -185,6 +185,13 @@ Requested 2026-11-04: "the timer continues even after the scenario has completed
 - [x] **10.2 Speed slider**: stops at -10x, -5x, -2x, -1x, 0, 1x, 2x with 20 even steps between each (0.05x between -2x and 2x), clickable stop labels, a readout that resets to 1x when clicked, arrow keys step one position. Negative speeds play in reverse.
 - [x] **10.3 Reverse playback cost**: going back without crossing an event or a departure only moves particles along their paths instead of rebuilding the scene each frame.
 
+## Phase 11: Speed stops and resuming
+
+Requested 2026-11-04.
+
+- [x] **11.1 Stops** at -2x, -1x, -.5x, -.25x, 0, .25x, .5x, 1x, 2x, 10 steps between each (0.025x near 0, 0.1x between 1x and 2x). Slider widened to 320 px so the nine labels fit.
+- [x] **11.2 Play continues from the current time**: play never moves the playhead (phase 10 restarted from the start when pressed at the end; now it stays paused there, and reset or the scrubber starts over). `tick` does nothing while paused, so a paused scene cannot drift. Speed changes, paused or playing, keep the current time.
+
 ---
 
 ## Done
