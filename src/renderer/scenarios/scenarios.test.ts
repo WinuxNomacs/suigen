@@ -68,6 +68,16 @@ describe('scenario validation catches mistakes', () => {
     expect(problemsOf(s).join()).toMatch(/spin projection must be 0.5 or -0.5/);
   });
 
+  it('a capture with the wrong gamma energy or a bound proton', () => {
+    const s = clone(RAW_PRESETS['deuterium-formation']) as { events: Array<Record<string, unknown>> };
+    (s.events[0].particle as Record<string, unknown>).energy = 2224566; // binding energy, ignoring the recoil
+    expect(problemsOf(s).join()).toMatch(/does not match n \+ p -> d/);
+    const twice = clone(RAW_PRESETS['deuterium-formation']) as { particles: unknown[]; events: Array<Record<string, unknown>> };
+    twice.particles.push({ id: 'n2', type: 'neutron', position: { x: 9, y: 0, z: 0 } });
+    twice.events.push({ ...clone(twice.events[0]), time: 130, neutronId: 'n2', particle: { type: 'photon', direction: { x: 1, y: 0, z: 0 }, energy: 2223249 } });
+    expect(problemsOf(twice).join()).toMatch(/only a free neutron and a free proton/);
+  });
+
   it('a massive particle moving at c outside a compressed span', () => {
     const s = clone(RAW_PRESETS['deuterium-formation']) as Record<string, unknown>;
     delete s.compressions;

@@ -1,11 +1,15 @@
 import { OrbitalState, ScenarioEvent, SimulationState, ParticleData, ParticleType, TimeCompression, Vec3 } from '../../shared/types';
-import { DEFAULT_PLAYBACK_SPEED, DEFAULT_SCENE_EXTENT_FM, FS_PER_TICK, LIGHT_SPEED_FM_PER_TICK, STEP_TICKS } from '../../shared/constants';
+import {
+  CAPTURE_DISTANCE_FM, DEFAULT_PLAYBACK_SPEED, DEFAULT_SCENE_EXTENT_FM, FS_PER_TICK, LIGHT_SPEED_FM_PER_TICK,
+  NP_CAPTURE_GAMMA_EV, NUCLEON_SPACING_FM, NUCLEUS_CLUSTER_FM, STEP_TICKS, THERMAL_NEUTRON_FM_PER_FS,
+} from '../../shared/constants';
 import { ParticleManager } from '../particles/ParticleManager';
 import { orbitalRadius } from '../particles/OrbitalMesh';
 import { findTransition } from './transitions';
 import { RealTime, realTime } from './time';
 
 const EXIT_MARGIN_TICKS = 1;
+export const NEUTRON_APPROACH_LABEL = 'thermal neutron approach (2,200 m/s)';
 
 type ScenarioParticle = Partial<ParticleData> & { type: ParticleType };
 
@@ -30,6 +34,7 @@ export class SimulationEngine {
   private lastDepartureTime = -Infinity; // latest time removeDeparted removed a particle
   private motions: Map<string, Motion> = new Map();
   private interactiveIds: Set<string> = new Set();
+  private approachSpans: Map<string, TimeCompression> = new Map(); // sandbox neutron id -> its fast-forward
   private particleManager: ParticleManager;
   private onEvent?: (event: ScenarioEvent, particleIds: string[]) => void;
   private onLoad?: () => void;
@@ -52,9 +57,10 @@ export class SimulationEngine {
   ): void {
     this.initialParticles = particles.map((p, i) => ({ ...p, id: p.id ?? `s${i}` }));
     this.events = [...events].sort((a, b) => a.time - b.time);
-    this.compressions = compressions;
+    this.compressions = compressions.map(c => ({ ...c })); // sandbox approaches are added to this list
     this.extent = extent;
     this.interactiveIds.clear();
+    this.approachSpans.clear();
     this.rebuild();
     this.advanceTo(0);
     this.onLoad?.();
@@ -149,7 +155,7 @@ export class SimulationEngine {
     let end = limit / LIGHT_SPEED_FM_PER_TICK;
     const removedAt = new Map<string, number>();
     for (const e of this.events) {
-      const id = e.action === 'remove' ? e.targetId : e.action === 'absorb' ? e.photonId : undefined;
+      const id = e.action === 'remove' ? e.targetId : e.action === 'absorb' ? e.photonId : e.action === 'capture' ? e.neutronId : undefined;
       if (id && !removedAt.has(id)) removedAt.set(id, e.time);
     }
     const consider = (p: ScenarioParticle | undefined, spawnTime: number) => {
@@ -167,7 +173,7 @@ export class SimulationEngine {
     this.initialParticles.forEach(p => consider(p, 0));
     for (const e of this.events) {
       end = Math.max(end, e.time);
-      if (e.action === 'spawn' || e.action === 'emit') consider(e.particle, e.time);
+      if (e.action === 'spawn' || e.action === 'emit' || e.action === 'capture') consider(e.particle, e.time);
     }
     return end;
   }
@@ -200,10 +206,79 @@ export class SimulationEngine {
     this.advanceTo(this.state.time);
   }
 
+  /** Protons with no other nucleon within NUCLEUS_CLUSTER_FM: they can capture a neutron. */
+  freeProtons(exceptId?: string): ParticleData[] {
+    const all = this.particleManager.getAllParticles();
+    const nucleons = all.filter(p => (p.type === 'proton' || p.type === 'neutron') && p.id !== exceptId);
+    return nucleons.filter(p => p.type === 'proton'
+      && !nucleons.some(o => o !== p && distance(o.position, p.position) <= NUCLEUS_CLUSTER_FM));
+  }
+
+  /**
+   * Places a sandbox neutron. With a free proton available it heads for the nearest one at thermal
+   * speed (the approach is a fast-forwarded span) and a capture event is recorded for its arrival.
+   * Returns false when it was placed at rest instead: no free proton, or another approach overlaps.
+   */
+  addUserNeutron(position: Vec3): boolean {
+    const t = this.state.time;
+    const target = this.freeProtons()
+      .map(p => ({ p, d: distance(p.position, position) }))
+      .sort((a, b) => a.d - b.d)[0];
+    const travel = target ? Math.max(0, target.d - NUCLEON_SPACING_FM) : 0;
+    const arrival = t + travel / LIGHT_SPEED_FM_PER_TICK;
+    if (!target || this.compressions.some(c => c.start < arrival && t < c.end)) {
+      this.addUserParticle('neutron', position);
+      return false;
+    }
+
+    const id = `u${nextUserId++}`;
+    this.interactiveIds.add(id);
+    const toward = {
+      x: target.p.position.x - position.x,
+      y: target.p.position.y - position.y,
+      z: target.p.position.z - position.z,
+    };
+    const neutron: ScenarioParticle = { type: 'neutron', id, position: { ...position } };
+    if (travel > 0) {
+      neutron.direction = normalize(toward);
+      // Drawn moving one light-tick per tick inside a span that stands for the real thermal travel time.
+      const span = { start: t, end: arrival, realFs: travel / THERMAL_NEUTRON_FM_PER_FS, label: NEUTRON_APPROACH_LABEL };
+      this.compressions.push(span);
+      this.approachSpans.set(id, span);
+    }
+    this.insertEvent({ time: t, action: 'spawn', particle: neutron });
+    this.insertSorted({
+      time: arrival,
+      action: 'capture',
+      neutronId: id,
+      protonId: target.p.id,
+      particle: {
+        type: 'photon',
+        id: `${id}g`,
+        position: { ...target.p.position },
+        direction: randomDirection(), // random in reality; chosen once so replays match
+        energy: NP_CAPTURE_GAMMA_EV,
+      },
+    });
+    this.advanceTo(t);
+    return true;
+  }
+
   /** Records a deletion at the current time; rewinding before it brings the particle back. */
   removeUserParticle(id: string): void {
     if (!this.particleManager.getParticle(id)) return;
-    this.insertEvent({ time: this.state.time, action: 'remove', targetId: id });
+    // Deleting a neutron mid-approach ends its fast-forward there, keeping the same real speed.
+    const span = this.approachSpans.get(id);
+    const t = this.state.time;
+    if (span && t < span.end) {
+      if (t <= span.start) this.compressions.splice(this.compressions.indexOf(span), 1);
+      else {
+        span.realFs *= (t - span.start) / (span.end - span.start);
+        span.end = t;
+      }
+      this.approachSpans.delete(id);
+    }
+    this.insertEvent({ time: t, action: 'remove', targetId: id });
     this.advanceTo(this.state.time);
   }
 
@@ -340,6 +415,13 @@ export class SimulationEngine {
     this.events.splice(this.nextEventIndex, 0, event);
   }
 
+  // A future event goes after every pending event at or before its time.
+  private insertSorted(event: ScenarioEvent): void {
+    let i = this.nextEventIndex;
+    while (i < this.events.length && this.events[i].time <= event.time) i++;
+    this.events.splice(i, 0, event);
+  }
+
   private spawn(p: ScenarioParticle, time: number): ParticleData {
     const pos = p.position || { x: 0, y: 0, z: 0 };
     const data = this.particleManager.addParticle(p.type, pos, p);
@@ -399,6 +481,31 @@ export class SimulationEngine {
         }
         break;
       }
+      case 'capture': {
+        const neutron = event.neutronId ? this.particleManager.getParticle(event.neutronId)?.data : undefined;
+        const proton = event.protonId ? this.particleManager.getParticle(event.protonId)?.data : undefined;
+        if (!neutron || !proton || !event.particle) break;
+        const motion = this.motions.get(neutron.id);
+        this.motions.delete(neutron.id); // the approach ends here either way
+        ids.push(neutron.id);
+        // Captured only if it reached a proton that is still free; otherwise (the proton was moved or
+        // took another neutron) it stops where its approach ended.
+        const reached = distance(neutron.position, proton.position) <= NUCLEON_SPACING_FM + CAPTURE_DISTANCE_FM;
+        if (!reached || !this.freeProtons(neutron.id).some(p => p.id === proton.id)) break;
+        const dir = motion?.direction ?? normalize({
+          x: neutron.position.x - proton.position.x,
+          y: neutron.position.y - proton.position.y,
+          z: neutron.position.z - proton.position.z,
+        });
+        const side = motion ? -1 : 1; // stay on the side it came from
+        this.particleManager.updatePosition(neutron.id, {
+          x: proton.position.x + side * dir.x * NUCLEON_SPACING_FM,
+          y: proton.position.y + side * dir.y * NUCLEON_SPACING_FM,
+          z: proton.position.z + side * dir.z * NUCLEON_SPACING_FM,
+        });
+        ids.push(this.spawn({ ...event.particle, type: 'photon', position: { ...proton.position } }, event.time).id);
+        break;
+      }
       case 'remove': {
         if (event.targetId && this.particleManager.getParticle(event.targetId)) {
           this.remove(event.targetId);
@@ -417,4 +524,16 @@ export class SimulationEngine {
 function normalize(v: Vec3): Vec3 {
   const len = Math.hypot(v.x, v.y, v.z) || 1;
   return { x: v.x / len, y: v.y / len, z: v.z / len };
+}
+
+function distance(a: Vec3, b: Vec3): number {
+  return Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+}
+
+/** Uniform over the sphere. */
+function randomDirection(): Vec3 {
+  const z = 2 * Math.random() - 1;
+  const phi = 2 * Math.PI * Math.random();
+  const r = Math.sqrt(1 - z * z);
+  return { x: r * Math.cos(phi), y: z, z: r * Math.sin(phi) };
 }

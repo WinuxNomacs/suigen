@@ -14,6 +14,20 @@ export const EV_TO_JOULES = 1.602176634e-19;
 // Rydberg energy R∞hc in eV (CODATA 2022): the binding energy for an infinitely heavy nucleus.
 export const RYDBERG_ENERGY_EV = 13.60569312299;
 
+const mc2Ev = (kg: number) => (kg * SPEED_OF_LIGHT ** 2) / EV_TO_JOULES;
+// Neutron capture by a free proton at rest, n + p → d + γ: the gamma ray carries
+// E = (M² - m_d²) / 2M with M = m_p + m_n (binding energy 2.2246 MeV minus the deuteron's 1.3 keV recoil).
+export const NP_CAPTURE_GAMMA_EV = (() => {
+  const M = mc2Ev(PROTON_MASS) + mc2Ev(NEUTRON_MASS);
+  const md = mc2Ev(DEUTERON_MASS);
+  return (M * M - md * md) / (2 * M);
+})();
+// A thermal neutron (room temperature, 2,200 m/s) and its kinetic energy ½mv² (0.0253 eV).
+export const THERMAL_NEUTRON_SPEED_M_S = 2200;
+export const THERMAL_NEUTRON_ENERGY_EV = (0.5 * NEUTRON_MASS * THERMAL_NEUTRON_SPEED_M_S ** 2) / EV_TO_JOULES;
+// 1 m/s = 1e15 fm / 1e15 fs = 1 fm/fs, so 2,200 m/s is 2,200 fm per fs.
+export const THERMAL_NEUTRON_FM_PER_FS = THERMAL_NEUTRON_SPEED_M_S;
+
 export const BOHR_RADIUS_FM = BOHR_RADIUS * 1e15;
 // 1 m/s = 1e15 fm / 1e15 fs, so the speed of light has the same value in fm/fs.
 export const SPEED_OF_LIGHT_FM_PER_FS = SPEED_OF_LIGHT;
@@ -41,6 +55,12 @@ export const ORBITAL_MORPH_TICKS = 50; // visual crossfade between clouds; not a
 
 // Nucleons closer than this share one label. Nuclei are a few fm across; atoms are ~100,000 fm.
 export const NUCLEUS_CLUSTER_FM = 20;
+// Where a captured neutron is drawn relative to its proton (markers, not sizes; the deuteron's
+// charge radius is 2.14 fm), and how close it must be for the capture to count.
+export const NUCLEON_SPACING_FM = 1.5;
+export const CAPTURE_DISTANCE_FM = 3;
+// Validator tolerance for a capture gamma ray's energy, in eV.
+export const CAPTURE_GAMMA_TOLERANCE_EV = 5;
 
 // Camera framing when no scenario sets the extent (sandbox): fits the 2p cloud's 90% surface.
 export const DEFAULT_SCENE_EXTENT_FM = 8 * BOHR_RADIUS_FM;

@@ -31,11 +31,14 @@ export interface ParticleData {
 
 export interface ScenarioEvent {
   time: number;
-  action: 'spawn' | 'absorb' | 'emit' | 'remove' | 'move';
+  action: 'spawn' | 'absorb' | 'emit' | 'remove' | 'move' | 'capture';
   particle?: Partial<ParticleData> & { type: ParticleType };
   photonId?: string;
   electronId?: string;
   targetId?: string;
+  /** `capture`: the neutron binds to the proton and `particle` (a gamma ray) is emitted. */
+  neutronId?: string;
+  protonId?: string;
   targetOrbital?: OrbitalState;
   /** New position for a `move` event, in fm. */
   position?: Vec3;

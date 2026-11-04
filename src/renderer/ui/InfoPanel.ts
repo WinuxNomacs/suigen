@@ -24,6 +24,10 @@ const SANDBOX_SIMPLIFICATIONS = [
   'Deleting a proton leaves its electron clouds in place; nothing frees the electrons.',
   'A photon is absorbed as it enters the cloud\u2019s 90% surface. Real absorption has no single point of impact.',
   'Ionization is not modeled: a real photon above 13.6 eV can knock the electron out of the atom.',
+  'A placed neutron heads for the nearest free proton (no other proton or neutron within 20 fm) at 2,200 m/s, the speed of a room-temperature neutron. Its approach is fast-forwarded. Only one neutron approaches at a time; one placed during another approach, or with no free proton, stays where it is placed.',
+  'Capture is certain here. A real slow neutron meeting a free proton is about 60 times more likely to bounce off (scattering, 20.5 barn) than to be captured (0.333 barn; NIST neutron data).',
+  'Only a free proton captures a neutron; heavier captures such as n + d \u2192 tritium are real but not modeled. A neutron whose proton was moved away before it arrived stops where its approach ended.',
+  'The capture gamma ray (2.22 MeV) leaves in a random direction, chosen once so rewinding replays it the same way.',
 ];
 
 type Child = Node | string | null | undefined | false;
@@ -126,7 +130,7 @@ export class InfoPanel {
         back,
         h('h3', {}, 'Sandbox Mode'),
         h('p', { class: 'hint' }, 'Select a particle type from the toolbar, then click in the viewport to place it.'),
-        h('p', { class: 'hint' }, 'Electrons settle around the nearest proton. Photons fly toward the nearest electron with the energy chosen under the \u03b3 button.'),
+        h('p', { class: 'hint' }, 'Electrons settle around the nearest proton. Photons fly toward the nearest electron with the energy chosen under the \u03b3 button. Neutrons head for the nearest free proton and bind to it, releasing a gamma ray.'),
         h('p', { class: 'hint' }, 'An electron absorbs a photon only if its energy matches a jump to a higher orbital (10.2 eV takes 1s to 2p). Otherwise the photon passes straight through.'),
         simplifications(SANDBOX_SIMPLIFICATIONS),
       );

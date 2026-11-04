@@ -1,7 +1,7 @@
 // Physics consistency checks for a scenario that already passed ScenarioSchema.
 // Replays the event list and reports anything the engine would show that contradicts the physics.
 import { OrbitalState, ParticleData, ParticleType, Scenario } from '../../shared/types';
-import { ABSORPTION_TOLERANCE_EV } from '../../shared/constants';
+import { ABSORPTION_TOLERANCE_EV, CAPTURE_GAMMA_TOLERANCE_EV, NP_CAPTURE_GAMMA_EV } from '../../shared/constants';
 import { energyLevel } from '../physics/transitions';
 
 const MAX_RENDERED_N = 4;
@@ -14,6 +14,7 @@ interface Alive {
   orbital?: OrbitalState;
   energy?: number;
   moving?: boolean;
+  bound?: boolean; // a nucleon already in a nucleus (after a capture)
 }
 
 const fmt = (o: OrbitalState) => `${o.n}${'spdf'[o.l] ?? '?'}`;
@@ -83,6 +84,24 @@ export function checkScenarioPhysics(s: Scenario): string[] {
         problems.push(...checkTransition(where, electron.orbital, e.targetOrbital, photon.energy, 'absorb'));
         electron.orbital = e.targetOrbital;
         alive.delete(e.photonId!);
+        break;
+      }
+      case 'capture': {
+        const neutron = e.neutronId ? alive.get(e.neutronId) : undefined;
+        const proton = e.protonId ? alive.get(e.protonId) : undefined;
+        if (!neutron || neutron.type !== 'neutron') { problems.push(`${where}: no neutron ${e.neutronId}`); break; }
+        if (!proton || proton.type !== 'proton') { problems.push(`${where}: no proton ${e.protonId}`); break; }
+        if (neutron.bound || proton.bound) problems.push(`${where}: only a free neutron and a free proton can form a deuteron`);
+        if (!e.particle) break;
+        if (e.particle.type !== 'photon') problems.push(`${where}: n + p capture emits a gamma-ray photon`);
+        checkParticle(e.particle, e.time, where);
+        const E = e.particle.energy;
+        if (E === undefined || Math.abs(E - NP_CAPTURE_GAMMA_EV) > CAPTURE_GAMMA_TOLERANCE_EV) {
+          problems.push(`${where}: gamma energy ${E} eV does not match n + p -> d (${NP_CAPTURE_GAMMA_EV.toFixed(0)} eV)`);
+        }
+        neutron.bound = proton.bound = true;
+        neutron.moving = false;
+        if (e.particle.id) alive.set(e.particle.id, { type: 'photon', energy: E, moving: true });
         break;
       }
       case 'emit': {

@@ -41,7 +41,8 @@
         "x": 0,
         "y": 0,
         "z": 0
-      }
+      },
+      "id": "p1"
     },
     {
       "id": "n1",
@@ -61,24 +62,9 @@
   "events": [
     {
       "time": 120,
-      "action": "remove",
-      "targetId": "n1"
-    },
-    {
-      "time": 120,
-      "action": "spawn",
-      "particle": {
-        "type": "neutron",
-        "position": {
-          "x": 1.5,
-          "y": 0,
-          "z": 0
-        }
-      }
-    },
-    {
-      "time": 120,
-      "action": "spawn",
+      "action": "capture",
+      "neutronId": "n1",
+      "protonId": "p1",
       "particle": {
         "type": "photon",
         "position": {

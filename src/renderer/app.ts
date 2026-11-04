@@ -228,8 +228,13 @@ viewport.addEventListener('click', (event) => {
     // intersectPlane returns null when the ray misses the floor (e.g. clicking the sky).
     const hit = raycaster.ray.intersectPlane(placementPlane, new THREE.Vector3());
     if (hit) {
-      const { position, extra } = placementDefaults(selectedType, { x: hit.x, y: hit.y, z: hit.z });
-      engine.addUserParticle(selectedType, position, extra);
+      const clicked = { x: hit.x, y: hit.y, z: hit.z };
+      if (selectedType === 'neutron') {
+        engine.addUserNeutron(clicked); // heads for the nearest free proton, if any
+      } else {
+        const { position, extra } = placementDefaults(selectedType, clicked);
+        engine.addUserParticle(selectedType, position, extra);
+      }
       toolbar.clearSelection();
     }
     return;

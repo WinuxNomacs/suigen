@@ -3,7 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { hydrogenRadii } from './hydrogen';
 import { findTransition, energyLevel } from './transitions';
 import { formatDuration, realTime } from './time';
-import { FS_PER_TICK, SPEED_OF_LIGHT_FM_PER_FS, LIGHT_SPEED_FM_PER_TICK, HYDROGEN_BINDING_EV, HC_EV_PM } from '../../shared/constants';
+import {
+  FS_PER_TICK, SPEED_OF_LIGHT_FM_PER_FS, LIGHT_SPEED_FM_PER_TICK, HYDROGEN_BINDING_EV, HC_EV_PM,
+  NP_CAPTURE_GAMMA_EV, THERMAL_NEUTRON_ENERGY_EV,
+} from '../../shared/constants';
 
 describe('hydrogen cloud radii (units of a0)', () => {
   // Reference values computed independently with the explicit radial functions (plan item 1.4).
@@ -93,5 +96,14 @@ describe('real time', () => {
     expect(formatDuration(1.6e6)).toBe('1.60 ns');
     expect(formatDuration(272.73)).toBe('273 fs');
     expect(formatDuration(2.6685e-4)).toBe('267 zs');
+  });
+});
+
+describe('neutron capture constants', () => {
+  it('n + p -> d gamma is 2.22325 MeV (binding 2.22457 MeV minus 1.32 keV recoil)', () => {
+    expect(NP_CAPTURE_GAMMA_EV).toBeCloseTo(2223248.7, 0);
+  });
+  it('a 2,200 m/s neutron has 0.0253 eV', () => {
+    expect(THERMAL_NEUTRON_ENERGY_EV).toBeCloseTo(0.02530, 5);
   });
 });

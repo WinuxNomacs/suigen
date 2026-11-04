@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { SimulationEngine } from './SimulationEngine';
+import { NEUTRON_APPROACH_LABEL, SimulationEngine } from './SimulationEngine';
 import { FakeParticleManager } from '../../test/FakeParticleManager';
 import { loadPreset } from '../scenarios/ScenarioLoader';
 import { ScenarioEvent } from '../../shared/types';
+import { NP_CAPTURE_GAMMA_EV, NUCLEON_SPACING_FM } from '../../shared/constants';
 
 // Tests below set speed and loop explicitly; the app defaults (0.25x, loop on) have their own test.
 function setup() {
@@ -317,5 +318,88 @@ describe('SimulationEngine', () => {
     engine.play();
     expect(engine.state.time).toBe(0);
     expect(engine.state.playing).toBe(true);
+  });
+
+  describe('sandbox neutron capture', () => {
+    const at = (x: number) => ({ x, y: 0, z: 0 });
+    const sandbox = () => {
+      const t = setup();
+      t.engine.loadScenario([], []);
+      t.engine.addUserParticle('proton', at(0));
+      return t;
+    };
+    const photons = (pm: FakeParticleManager) => pm.getAllParticles().filter(p => p.type === 'photon');
+    const neutrons = (pm: FakeParticleManager) => pm.getAllParticles().filter(p => p.type === 'neutron');
+
+    it('a neutron heads for a free proton, binds, and emits the capture gamma', () => {
+      const { pm, engine } = sandbox();
+      expect(engine.addUserNeutron(at(200000))).toBe(true);
+      const arrival = (200000 - NUCLEON_SPACING_FM) / 5000;
+      engine.seek(arrival / 2);
+      expect(engine.getRealTime().activeLabel).toBe(NEUTRON_APPROACH_LABEL);
+      expect(neutrons(pm)[0].position.x).toBeCloseTo(100000 + NUCLEON_SPACING_FM / 2, 3);
+      engine.seek(arrival + 1);
+      expect(neutrons(pm)[0].position.x).toBeCloseTo(NUCLEON_SPACING_FM, 6);
+      expect(photons(pm)).toHaveLength(1);
+      expect(photons(pm)[0].energy).toBe(NP_CAPTURE_GAMMA_EV);
+      // 199,998.5 fm at 2,200 m/s (= 2,200 fm/fs) took 90.9 fs; then 1 tick of light travel.
+      expect(engine.getRealTime().fs).toBeCloseTo((200000 - NUCLEON_SPACING_FM) / 2200 + 1 * (5000 / 2.99792458e8), 6);
+      expect(engine.getRealTime().approximate).toBe(true);
+    });
+
+    it('rewinding before the capture brings back the moving neutron; replay matches', () => {
+      const { pm, engine } = sandbox();
+      engine.addUserNeutron(at(-150000));
+      engine.seek(100);
+      const after = pm.snapshot();
+      engine.seek(10);
+      expect(photons(pm)).toHaveLength(0);
+      engine.seek(100);
+      expect(pm.snapshot()).toBe(after);
+    });
+
+    it('a second neutron during an approach, or with no free proton, stays at rest', () => {
+      const { pm, engine } = sandbox();
+      engine.addUserNeutron(at(200000));
+      expect(engine.addUserNeutron(at(0.5 * 200000 + 50000))).toBe(false); // overlaps the first approach
+      engine.seek(100);
+      expect(engine.addUserNeutron(at(300000))).toBe(false); // the proton is now a deuteron
+      expect(neutrons(pm).filter(n => engine.isMoving(n.id))).toHaveLength(0);
+      expect(photons(pm)).toHaveLength(1);
+    });
+
+    it('deleting the neutron mid-approach ends the fast-forward there and nothing is captured', () => {
+      const { pm, engine } = sandbox();
+      engine.addUserNeutron(at(200000));
+      engine.seek(10);
+      const id = neutrons(pm)[0].id;
+      engine.removeUserParticle(id);
+      engine.seek(100);
+      expect(photons(pm)).toHaveLength(0);
+      // 10 ticks of the approach stood for 10/39.9997 of its real time.
+      expect(engine.getRealTime().fs).toBeCloseTo(((200000 - NUCLEON_SPACING_FM) / 2200) * (10 / ((200000 - NUCLEON_SPACING_FM) / 5000)) + 90 * (5000 / 2.99792458e8), 6);
+    });
+
+    it('a neutron whose proton was moved stops where its approach ended, with no gamma', () => {
+      const { pm, engine } = sandbox();
+      engine.addUserNeutron(at(200000));
+      engine.seek(5);
+      const proton = pm.getAllParticles().find(p => p.type === 'proton')!;
+      engine.moveParticles([{ id: proton.id, position: { x: 0, y: 0, z: 100000 } }]);
+      engine.seek(100);
+      expect(photons(pm)).toHaveLength(0);
+      expect(neutrons(pm)[0].position.x).toBeCloseTo(NUCLEON_SPACING_FM, 6);
+      expect(engine.isMoving(neutrons(pm)[0].id)).toBe(false);
+    });
+  });
+
+  it('the deuterium preset captures through the same rule', () => {
+    const { pm, engine } = setup();
+    const s = loadPreset('deuterium-formation')!;
+    engine.loadScenario(s.particles, s.events, s.compressions, s.extent);
+    engine.seek(121);
+    const n = pm.getAllParticles().find(p => p.type === 'neutron')!;
+    expect(n.position).toEqual({ x: 1.5, y: 0, z: 0 });
+    expect(pm.getAllParticles().filter(p => p.type === 'photon')).toHaveLength(1);
   });
 });

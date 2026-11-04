@@ -679,6 +679,161 @@
               "position"
             ],
             "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "time": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Animation ticks (see physics/time.ts)"
+              },
+              "action": {
+                "type": "string",
+                "const": "capture"
+              },
+              "neutronId": {
+                "type": "string"
+              },
+              "protonId": {
+                "type": "string"
+              },
+              "particle": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "electron",
+                      "proton",
+                      "neutron",
+                      "photon"
+                    ]
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      },
+                      "z": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y",
+                      "z"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "momentum": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      },
+                      "z": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y",
+                      "z"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "spin": {
+                    "description": "Spin projection m_s in units of hbar: +-0.5 for electrons, protons and neutrons, +-1 for photons",
+                    "type": "number"
+                  },
+                  "orbital": {
+                    "type": "object",
+                    "properties": {
+                      "n": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "l": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "m": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "required": [
+                      "n",
+                      "l",
+                      "m"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "direction": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      },
+                      "z": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y",
+                      "z"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "speed": {
+                    "description": "Speed as a fraction of the speed of light",
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1
+                  },
+                  "energy": {
+                    "description": "Photon energy or kinetic energy, in eV",
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "effectiveCharge": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "time",
+              "action",
+              "neutronId",
+              "protonId",
+              "particle"
+            ],
+            "additionalProperties": false
           }
         ]
       }
