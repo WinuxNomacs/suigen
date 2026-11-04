@@ -352,3 +352,33 @@ body {
 .simplifications summary { cursor: pointer; color: #cc9955; }
 .simplifications ul { margin: 6px 0 0 16px; }
 .simplifications li { margin-bottom: 6px; line-height: 1.4; }
+
+/* Sandbox tutorial */
+.tutorial:empty { display: none; }
+.tutorial {
+  margin: 8px 0 12px;
+  padding: 10px 12px;
+  border: 1px solid #a8862a;
+  border-radius: 6px;
+  background: #1f1a0e;
+  color: #ddd;
+  font-size: 13px;
+}
+.tutorial p { margin: 6px 0; line-height: 1.4; }
+.tutorial-header { display: flex; justify-content: space-between; align-items: center; color: #ffcc44; }
+.tutorial-hint { color: #f0a060; }
+.tutorial button, .tutorial-open {
+  background: #2a2412; border: 1px solid #a8862a; border-radius: 4px; color: #ffcc44;
+  padding: 3px 10px; cursor: pointer; font-size: 12px;
+}
+.tutorial button:hover, .tutorial-open:hover { background: #3a3218; }
+.tutorial-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.tutorial-open { margin: 4px 0 10px; }
+.tutorial-target {
+  outline: 2px solid #ffcc44;
+  outline-offset: 3px;
+  animation: tutorial-pulse 1.2s ease-in-out infinite;
+}
+@keyframes tutorial-pulse {
+  50% { outline-color: rgba(255, 204, 68, 0.25); }
+}

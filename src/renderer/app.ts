@@ -279,6 +279,7 @@ function animate(): void {
 
   particleManager.update(engine.state.time);
   timeline.update();
+  infoPanel.update();
   sceneManager.render();
 }
 

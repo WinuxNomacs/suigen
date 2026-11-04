@@ -393,6 +393,19 @@ describe('SimulationEngine', () => {
     });
   });
 
+  it('reports tutorial facts', () => {
+    const { engine } = setup();
+    engine.loadScenario([], []);
+    expect(engine.tutorialFacts()).toEqual({ protons: 0, neutronsAtRest: 0, capturesRecorded: 0, capturesHappened: 0 });
+    engine.addUserNeutron({ x: 5, y: 0, z: 0 }); // no proton yet: at rest
+    expect(engine.tutorialFacts().neutronsAtRest).toBe(1);
+    engine.addUserParticle('proton', { x: 300000, y: 0, z: 0 }); // the resting neutron is far: proton is free
+    engine.addUserNeutron({ x: 300000, y: 0, z: 100000 });
+    expect(engine.tutorialFacts()).toEqual({ protons: 1, neutronsAtRest: 1, capturesRecorded: 1, capturesHappened: 0 });
+    engine.seek(100);
+    expect(engine.tutorialFacts()).toEqual({ protons: 1, neutronsAtRest: 1, capturesRecorded: 1, capturesHappened: 1 });
+  });
+
   it('the deuterium preset captures through the same rule', () => {
     const { pm, engine } = setup();
     const s = loadPreset('deuterium-formation')!;

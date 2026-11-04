@@ -2,6 +2,8 @@ import { ParticleData, Scenario } from '../../shared/types';
 import { getPresets, loadPreset } from '../scenarios/ScenarioLoader';
 import { SimulationEngine } from '../physics/SimulationEngine';
 import { formatEnergy } from '../particles/ParticleLabels';
+import { Child, h } from './dom';
+import { Tutorial, tutorialSeen } from './Tutorial';
 
 type PanelMode = 'gallery' | 'description' | 'particle';
 
@@ -30,21 +32,6 @@ const SANDBOX_SIMPLIFICATIONS = [
   'The capture gamma ray (2.22 MeV) leaves in a random direction, chosen once so rewinding replays it the same way.',
 ];
 
-type Child = Node | string | null | undefined | false;
-
-/** Builds an element. Text is always set as text, never parsed as HTML. */
-function h(tag: string, attrs: Record<string, string> = {}, ...children: Child[]): HTMLElement {
-  const el = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (k === 'class') el.className = v;
-    else if (k.startsWith('data-')) el.dataset[k.slice(5)] = v;
-    else el.setAttribute(k, v);
-  }
-  for (const c of children) {
-    if (c) el.append(c);
-  }
-  return el;
-}
 
 /** Intrinsic spin from the particle type, plus the projection m_s when the scenario sets it. */
 export function spinText(p: Pick<ParticleData, 'type' | 'spin'>): string {
@@ -67,10 +54,30 @@ export class InfoPanel {
   private currentScenario: Scenario | null = null;
   private onLeaveParticle?: () => void;
 
+  private tutorial: Tutorial;
+
   constructor(container: HTMLElement, engine: SimulationEngine) {
     this.container = container;
     this.engine = engine;
+    this.tutorial = new Tutorial(
+      () => engine.tutorialFacts(),
+      () => this.openPreset('deuterium-formation'),
+      () => { if (this.mode === 'description' && !this.currentScenario) this.renderDescription(null); },
+    );
     this.renderGallery();
+  }
+
+  /** Called every frame. */
+  update(): void {
+    this.tutorial.update();
+  }
+
+  private openPreset(key: string): void {
+    const scenario = loadPreset(key);
+    if (!scenario) return;
+    this.tutorial.stop(false);
+    this.engine.loadScenario(scenario.particles, scenario.events, scenario.compressions, scenario.extent);
+    this.renderDescription(scenario);
   }
 
   /** Called when the particle view is closed from inside the panel (back button). */
@@ -91,14 +98,11 @@ export class InfoPanel {
     card.addEventListener('click', () => {
       if (key === 'sandbox') {
         this.engine.loadScenario([], []);
+        if (!tutorialSeen()) this.tutorial.start(); // first visit
         this.renderDescription(null);
         return;
       }
-      const scenario = loadPreset(key);
-      if (scenario) {
-        this.engine.loadScenario(scenario.particles, scenario.events, scenario.compressions, scenario.extent);
-        this.renderDescription(scenario);
-      }
+      this.openPreset(key);
     });
     return card;
   }
@@ -110,6 +114,7 @@ export class InfoPanel {
   }
 
   private renderGallery(): void {
+    this.tutorial.stop(false);
     this.mode = 'gallery';
     this.currentScenario = null;
     const cards = Object.entries(getPresets()).map(([key, s]) => this.card(key, s.name, s.layman.title, s.layman.summary));
@@ -126,9 +131,19 @@ export class InfoPanel {
     const back = this.backButton('back-to-gallery', '\u2190 Scenarios', () => this.renderGallery());
 
     if (!scenario) {
+      let tutorialArea: HTMLElement = this.tutorial.element;
+      if (!this.tutorial.isActive()) {
+        tutorialArea = h('button', { class: 'tutorial-open', id: 'tutorial-open' }, 'Show tutorial: make a deuteron');
+        tutorialArea.addEventListener('click', () => {
+          this.engine.loadScenario([], []);
+          this.tutorial.start();
+          this.renderDescription(null);
+        });
+      }
       this.show(
         back,
         h('h3', {}, 'Sandbox Mode'),
+        tutorialArea,
         h('p', { class: 'hint' }, 'Select a particle type from the toolbar, then click in the viewport to place it.'),
         h('p', { class: 'hint' }, 'Electrons settle around the nearest proton. Photons fly toward the nearest electron with the energy chosen under the \u03b3 button. Neutrons head for the nearest free proton and bind to it, releasing a gamma ray.'),
         h('p', { class: 'hint' }, 'An electron absorbs a photon only if its energy matches a jump to a higher orbital (10.2 eV takes 1s to 2p). Otherwise the photon passes straight through.'),

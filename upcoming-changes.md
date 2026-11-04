@@ -224,9 +224,9 @@ The sandbox has no nuclear physics today: a placed neutron sits still and nothin
 
 ### Phase 14: Sandbox tutorial
 
-- [ ] **14.1 Step card** in the sandbox panel: (1) place a proton: highlights the p⁺ button, then the floor; (2) place a neutron: it heads for the proton; (3) press play: highlights play; (4) explains what happened (deuteron formed, 2.22 MeV gamma carries the binding energy) and links to the Deuterium Formation scenario.
-- [ ] **14.2 Progress from real actions**: each step completes from engine events (particle placed, capture recorded), not from clicks on the card. Skip button; "Show tutorial" button in the sandbox panel; shown automatically on the first sandbox visit (remembered in browser storage, with a fallback to showing it if storage is unavailable).
-- [ ] **14.3 Checks**: scripted Electron run doing the steps with real mouse input; skip and reopen.
+- [x] **14.1 Step card** in the sandbox panel: (1) place a proton: highlights the p⁺ button, then the floor; (2) place a neutron: it heads for the proton; (3) press play: highlights play; (4) explains what happened (deuteron formed, 2.22 MeV gamma carries the binding energy) and links to the Deuterium Formation scenario.
+- [x] **14.2 Progress from real actions**: each step completes from engine events (particle placed, capture recorded), not from clicks on the card. Skip button; "Show tutorial" button in the sandbox panel; shown automatically on the first sandbox visit (remembered in browser storage, with a fallback to showing it if storage is unavailable).
+- [x] **14.3 Checks**: scripted Electron run doing the steps with real mouse input; skip and reopen.
 
 ### Phase 15: Hydrogen ionization scenario
 

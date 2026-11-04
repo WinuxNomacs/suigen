@@ -206,6 +206,19 @@ export class SimulationEngine {
     this.advanceTo(this.state.time);
   }
 
+  /** Counts for the sandbox tutorial. */
+  tutorialFacts(): { protons: number; neutronsAtRest: number; capturesRecorded: number; capturesHappened: number } {
+    const all = this.particleManager.getAllParticles();
+    const captures = this.events.map((e, i) => ({ e, i })).filter(({ e }) => e.action === 'capture');
+    return {
+      protons: all.filter(p => p.type === 'proton').length,
+      neutronsAtRest: all.filter(p => p.type === 'neutron' && !this.motions.has(p.id)
+        && !captures.some(({ e, i }) => i < this.nextEventIndex && e.neutronId === p.id)).length,
+      capturesRecorded: captures.length,
+      capturesHappened: captures.filter(({ i }) => i < this.nextEventIndex).length,
+    };
+  }
+
   /** Protons with no other nucleon within NUCLEUS_CLUSTER_FM: they can capture a neutron. */
   freeProtons(exceptId?: string): ParticleData[] {
     const all = this.particleManager.getAllParticles();
