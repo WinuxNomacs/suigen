@@ -57,7 +57,7 @@ export const ORBITAL_MORPH_TICKS = 50; // visual crossfade between clouds; not a
 // Nucleons closer than this share one label. Nuclei are a few fm across; atoms are ~100,000 fm.
 export const NUCLEUS_CLUSTER_FM = 20;
 // Where a captured neutron is drawn relative to its proton (markers, not sizes; the deuteron's
-// charge radius is 2.14 fm), and how close it must be for the capture to count.
+// charge radius is 2.128 fm, CODATA 2022), and how close it must be for the capture to count.
 export const NUCLEON_SPACING_FM = 1.5;
 export const CAPTURE_DISTANCE_FM = 3;
 // Validator tolerance for a capture gamma ray's energy, in eV.

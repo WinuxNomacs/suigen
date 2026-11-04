@@ -6,7 +6,7 @@ New requests go in `new.md` (untracked) and are turned into phases here. Each ph
 
 **Up next**
 
-- Nothing planned. Phases 1-16 are done.
+- Nothing planned. Phases 1-17 are done.
 
 **Then**
 
@@ -273,6 +273,17 @@ Numbers computed 2026-11-04 (CODATA 2022, reduced-mass hydrogen):
 - [x] **16.8 Found while building**: (a) the DOM helper set `data-*` attributes through `dataset`, which rejects hyphenated names, so the My scenarios cards threw; it now uses `setAttribute`. (b) Reopened sandbox scenes reuse ids u1, u2, ...; new placements now continue after the highest id in the file. (c) Leaving a particle's details in the sandbox went back to the gallery instead of the sandbox panel.
 
 ---
+
+## Phase 17: Second scientific accuracy review
+
+Review requested 2026-11-04 ("Check the project for any scientific inaccuracies"). Every number shown in the app or written in scenario text was recomputed and matched; the fixes are all wording.
+
+- [x] **17.1 Ionization harm**: X-rays and gamma rays ionize; the UV in sunlight (about 3 to 4.4 eV) cannot, and damages DNA by direct absorption (Hydrogen Ionization, "why it matters").
+- [x] **17.2 Deuterium capture**: the text no longer implies capture always happens; the scenario lists that scattering is about 60 times likelier (20.5 b vs 0.333 b) and that a 2,200 m/s neutron is a wave about 180 pm long, comparable to the 282 pm drawn atom. A test computes both numbers.
+- [x] **17.3 Absorption examples**: skin warming and solar panels removed (not discrete-level absorption); stellar absorption lines added; solids absorb bands.
+- [x] **17.4 Smaller wording**: the ionization fast-forward travels 500,000 fm "until well outside the picture" (the frame shows about 275,000 fm); Pauli label says electrons in one atom; "four lines, all in the Balmer series".
+- [x] **17.5 Constants comment**: deuteron charge radius 2.128 fm (CODATA 2022: 2.12778 fm), was 2.14.
+- [x] **17.6 README**: intro lists hydrogen ionization; the wishlist no longer calls 100 particles the most an atom has (uranium-238 has 330, the heaviest over 400).
 
 ## Done
 

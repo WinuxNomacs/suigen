@@ -20,7 +20,7 @@
       },
       {
         "label": "Pauli exclusion",
-        "tex": "No two fermions can share all quantum numbers (n, l, m, m_s)"
+        "tex": "No two electrons in one atom can share all quantum numbers (n, l, m, m_s)"
       },
       {
         "label": "First ionization energy",
